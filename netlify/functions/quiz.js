@@ -45,6 +45,32 @@ async function supabase(path, options = {}) {
 }
 
 exports.handler = async (event) => {
+    if (
+    event.httpMethod === "POST" &&
+    event.body
+  ) {
+    const test = JSON.parse(event.body);
+
+    if (test.action === "health") {
+      try {
+        const result = await supabase(
+          "chapters?select=id&limit=1"
+        );
+
+        return json(200, {
+          success: true,
+          message: "Connexion Supabase réussie."
+        });
+      } catch (error) {
+        console.error("Test Supabase échoué :", error);
+
+        return json(500, {
+          success: false,
+          message: "Connexion Supabase échouée."
+        });
+      }
+    }
+  }
   if (event.httpMethod !== "POST") {
     return json(405, { error: "Méthode non autorisée." });
   }
