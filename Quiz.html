@@ -51,7 +51,11 @@
       font-style: italic;
     }
 
-    .ornament { color: var(--gold); letter-spacing: 8px; margin-top: 20px; }
+    .ornament {
+      color: var(--gold);
+      letter-spacing: 8px;
+      margin-top: 20px;
+    }
 
     .panel, .question, .result-card {
       padding: 22px;
@@ -62,7 +66,11 @@
       box-shadow: 0 8px 25px #00000024;
     }
 
-    label { display: block; margin-bottom: 7px; color: var(--muted); }
+    label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+    }
 
     input[type="text"] {
       width: 100%;
@@ -82,7 +90,10 @@
       outline-offset: 3px;
     }
 
-    button:disabled { opacity: .55; cursor: not-allowed; }
+    button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
 
     .primary {
       width: 100%;
@@ -153,7 +164,11 @@
       font-size: 12px;
     }
 
-    .mode-label { margin-top: 18px; color: var(--gold-light); font-weight: bold; }
+    .mode-label {
+      margin-top: 18px;
+      color: var(--gold-light);
+      font-weight: bold;
+    }
 
     .mode-buttons {
       display: grid;
@@ -194,7 +209,11 @@
       background: #242844;
     }
 
-    .choice input { margin-top: 6px; accent-color: var(--gold); }
+    .choice input {
+      margin-top: 6px;
+      accent-color: var(--gold);
+    }
+
     .choice span { overflow-wrap: anywhere; }
     .answer-area { margin-top: 10px; }
     .question-footer { margin-top: 14px; color: var(--muted); font-size: 13px; }
@@ -205,7 +224,13 @@
     .correct { color: var(--success); }
     .incorrect { color: var(--error); }
     .explanation { color: var(--muted); white-space: pre-wrap; }
-    footer { padding: 25px 10px; color: var(--muted); text-align: center; font-size: 13px; }
+
+    footer {
+      padding: 25px 10px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 13px;
+    }
 
     @media (max-width: 520px) {
       body { padding: 12px 10px 30px; }
@@ -230,7 +255,7 @@
 
   <section id="setup" class="panel">
     <h2 id="setup-title">Entrer dans les Archives</h2>
-    <p id="setup-description">Gardien, renseigne ton pseudo Discord pour commencer l'épreuve.</p>
+    <p id="setup-description">Bienvenue, voyageur des Archives ! Renseigne ton pseudo Discord pour ouvrir ce chapitre et commencer l'épreuve.</p>
 
     <form id="load-form">
       <label for="pseudo">Pseudo Discord</label>
@@ -306,7 +331,11 @@ let submitted = false;
 
 function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
   })[c]);
 }
 
@@ -343,9 +372,11 @@ function getOptions(question) {
     if (typeof option === "string" || typeof option === "number") {
       return String(option);
     }
+
     if (option && typeof option === "object") {
       return String(option.text ?? option.label ?? "");
     }
+
     return "";
   }).filter(Boolean);
 }
@@ -436,6 +467,7 @@ async function chooseMode(questionId, mode) {
   const question = currentQuestions.find(
     q => Number(q.id) === Number(questionId)
   );
+
   if (!question) return;
 
   const options = getOptions(question);
