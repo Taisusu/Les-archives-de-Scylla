@@ -1,4 +1,4 @@
-
+```javascript
 const json = (statusCode, data) => ({
   statusCode,
   headers: {
@@ -8,14 +8,14 @@ const json = (statusCode, data) => ({
   body: JSON.stringify(data)
 });
 
+// Normalisation cohérente avec le contrôle SQL :
+// casse, accents, espaces et ponctuation ignorés.
 const normalize = (value) =>
   String(value ?? "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase("fr")
-    .replace(/[’']/g, "'")
-    .replace(/[^\p{L}\p{N}]+/gu, " ")
-    .trim();
+    .replace(/[^a-z0-9]/g, "");
 
 async function supabase(path, options = {}) {
   const url = process.env.SUPABASE_URL;
@@ -41,6 +41,7 @@ async function supabase(path, options = {}) {
     console.error("Erreur Supabase :", response.status, body);
 
     let details = {};
+
     try {
       details = body ? JSON.parse(body) : {};
     } catch {
@@ -52,6 +53,7 @@ async function supabase(path, options = {}) {
     error.code = details.code || null;
     error.details = details.details || null;
     error.messageFromDatabase = details.message || null;
+
     throw error;
   }
 
@@ -88,8 +90,7 @@ async function getPublishedChapter(chapterId) {
   return chapters[0] || null;
 }
 
-// Vérifie si le pseudo possède déjà un résultat dans ce chapitre.
-// Ignore les majuscules, accents, ponctuation et espaces superflus.
+// Vérifie si le pseudo possède déjà un résultat pour ce chapitre.
 async function hasSubmittedChapter(chapterId, pseudo) {
   const rows = await supabase(
     `submissions?chapter_id=eq.${chapterId}&select=discord_pseudo`
@@ -145,7 +146,7 @@ exports.handler = async (event) => {
       });
     }
 
-    // Liste des chapitres publiés et non publiés.
+    // Liste des chapitres, publiés ou non.
     if (input.action === "listChapters") {
       const chapters = await supabase(
         "chapters?select=id,title,volume_number,chapter_number,is_published&order=volume_number.asc,chapter_number.asc"
@@ -174,7 +175,7 @@ exports.handler = async (event) => {
       `questions?chapter_id=eq.${chapterId}&select=id,question_number,question_text,question_type,options,is_double&order=question_number.asc`
     );
 
-    if (questions.length === 0) {
+    if (!questions.length) {
       return json(400, {
         error: "Ce chapitre ne contient aucune question."
       });
@@ -184,7 +185,7 @@ exports.handler = async (event) => {
     if (input.action === "start") {
       const pseudo = String(input.pseudo || "").trim();
 
-      if (!pseudo || pseudo.length > 50) {
+      if (!pseudo || pseudo.length > 50 || !normalize(pseudo)) {
         return json(400, {
           error: "Pseudo invalide."
         });
@@ -232,7 +233,7 @@ exports.handler = async (event) => {
       });
     }
 
-    // Enregistrer définitivement le mode choisi pour une question.
+    // Enregistrer définitivement le mode choisi.
     if (input.action === "chooseMode") {
       const questionId = Number(input.questionId);
       const mode = input.mode;
@@ -333,16 +334,36 @@ exports.handler = async (event) => {
         }
       }
 
-      // Le mode CASH ne révèle aucune proposition.
-      await supabase("quiz_attempt_modes", {
-        method: "POST",
-        body: JSON.stringify({
-          attempt_id: attempt.id,
-          question_id: questionId,
-          selected_mode: mode,
-          displayed_options: displayedOptions
-        })
-      });
+      // CASH ne révèle aucune proposition.
+      try {
+        await supabase("quiz_attempt_modes", {
+          method: "POST",
+          body: JSON.stringify({
+            attempt_id: attempt.id,
+            question_id: questionId,
+            selected_mode: mode,
+            displayed_options: displayedOptions
+          })
+        });
+      } catch (error) {
+        // Si deux demandes choisissent simultanément un mode,
+        // ne pas prétendre que le nouveau choix a été enregistré.
+        if (error.code === "23505" || error.status === 409) {
+          const saved = await supabase(
+            `quiz_attempt_modes?attempt_id=eq.${attempt.id}&question_id=eq.${questionId}&select=selected_mode,displayed_options`
+          );
+
+          if (saved[0]) {
+            return json(200, {
+              mode: saved[0].selected_mode,
+              options: saved[0].displayed_options || [],
+              locked: true
+            });
+          }
+        }
+
+        throw error;
+      }
 
       return json(200, {
         mode,
@@ -373,10 +394,17 @@ exports.handler = async (event) => {
       const submitted = new Map();
 
       for (const answer of answers) {
+        if (!answer || typeof answer !== "object") {
+          return json(400, {
+            error: "Une réponse est invalide."
+          });
+        }
+
         const id = Number(answer.questionId);
 
         if (
           !Number.isSafeInteger(id) ||
+          !questions.some((q) => Number(q.id) === id) ||
           submitted.has(id) ||
           typeof answer.answer !== "string" ||
           answer.answer.trim().length === 0 ||
@@ -401,7 +429,10 @@ exports.handler = async (event) => {
         ])
       );
 
-      if (modesByQuestion.size !== questions.length) {
+      if (
+        modesByQuestion.size !== questions.length ||
+        questions.some((q) => !modesByQuestion.has(Number(q.id)))
+      ) {
         return json(400, {
           error: "Choisis un mode pour chaque question avant de valider."
         });
@@ -410,6 +441,12 @@ exports.handler = async (event) => {
       const fullQuestions = await supabase(
         `questions?chapter_id=eq.${chapterId}&select=id,question_number,question_text,question_type,options,correct_answers,correct_answer_display,explanation,is_double&order=question_number.asc`
       );
+
+      if (fullQuestions.length !== questions.length) {
+        return json(400, {
+          error: "Les questions du chapitre ont changé. Recharge le quiz."
+        });
+      }
 
       const corrections = [];
       const storedAnswers = [];
@@ -488,16 +525,17 @@ exports.handler = async (event) => {
         });
       }
 
-      // Dernière vérification avant l'insertion.
-      // La contrainte SQL à ajouter ensuite sera nécessaire pour
-      // empêcher également les validations véritablement simultanées.
+      // Dernière vérification applicative avant insertion.
+      // Le déclencheur SQL reste la protection contre les courses simultanées.
       if (await hasSubmittedChapter(chapterId, attempt.discord_pseudo)) {
         return json(409, {
           error: "Un résultat a déjà été scellé pour ce pseudo dans ce chapitre. Le premier envoi reste définitif."
         });
       }
 
-      // Enregistrer le résultat.
+      // Créer la soumission.
+      // La protection SQL refuse les doublons même si deux envois
+      // arrivent simultanément.
       let submissions;
 
       try {
@@ -513,8 +551,6 @@ exports.handler = async (event) => {
           })
         });
       } catch (error) {
-        // Une contrainte unique PostgreSQL renvoie normalement 23505.
-        // Le code 409 couvre également un conflit HTTP.
         if (error.code === "23505" || error.status === 409) {
           return json(409, {
             error: "Ton résultat pour ce chapitre a déjà été enregistré. Le premier envoi reste définitif."
@@ -567,3 +603,4 @@ exports.handler = async (event) => {
     });
   }
 };
+```
