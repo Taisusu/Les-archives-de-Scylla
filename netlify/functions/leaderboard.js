@@ -45,7 +45,9 @@ function normalizePseudo(value) {
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
-    return json(405, { error: "Méthode non autorisée." });
+    return json(405, {
+      error: "Méthode non autorisée."
+    });
   }
 
   let input;
@@ -53,10 +55,13 @@ exports.handler = async (event) => {
   try {
     input = JSON.parse(event.body || "{}");
   } catch {
-    return json(400, { error: "La requête n'est pas un JSON valide." });
+    return json(400, {
+      error: "La requête n'est pas un JSON valide."
+    });
   }
 
   try {
+    // Liste des chapitres publiés.
     if (input.action === "listChapters") {
       const chapters = await supabase(
         "chapters?is_published=eq.true&select=id,title,volume_number,chapter_number&order=volume_number.asc,chapter_number.asc"
@@ -65,13 +70,17 @@ exports.handler = async (event) => {
       return json(200, { chapters });
     }
 
+    // Classement d'un chapitre.
     if (input.action === "chapterRanking") {
       const chapterId = Number(input.chapterId);
 
       if (!Number.isSafeInteger(chapterId) || chapterId < 1) {
-        return json(400, { error: "Chapitre invalide." });
+        return json(400, {
+          error: "Chapitre invalide."
+        });
       }
 
+      // Vérifier que le chapitre existe et est publié.
       const chapters = await supabase(
         `chapters?id=eq.${chapterId}&is_published=eq.true&select=id,title,volume_number,chapter_number`
       );
@@ -79,20 +88,26 @@ exports.handler = async (event) => {
       const chapter = chapters[0];
 
       if (!chapter) {
-        return json(404, { error: "Chapitre indisponible." });
+        return json(404, {
+          error: "Chapitre indisponible."
+        });
       }
 
-      // Récupérer les résultats dans leur ordre d'enregistrement.
-      // Cela suppose que la colonne created_at existe dans submissions.
+      // Récupérer les résultats dans l'ordre de leur enregistrement.
+      // submitted_at est la colonne de date présente dans Supabase.
       const submissions = await supabase(
-        `submissions?chapter_id=eq.${chapterId}&select=discord_pseudo,total_fragments,created_at&order=created_at.asc`
+        `submissions?chapter_id=eq.${chapterId}&select=id,discord_pseudo,total_fragments,submitted_at&order=submitted_at.asc,id.asc`
       );
 
       // Conserver uniquement le premier résultat de chaque pseudo.
+      // Les accents, majuscules et espaces multiples sont normalisés.
       const firstScores = new Map();
 
       for (const submission of submissions || []) {
-        const pseudo = String(submission.discord_pseudo ?? "").trim();
+        const pseudo = String(
+          submission.discord_pseudo ?? ""
+        ).trim();
+
         const key = normalizePseudo(pseudo);
         const score = Number(submission.total_fragments);
 
@@ -100,6 +115,7 @@ exports.handler = async (event) => {
           continue;
         }
 
+        // Le premier résultat rencontré reste définitif.
         if (!firstScores.has(key)) {
           firstScores.set(key, {
             pseudo,
@@ -108,6 +124,7 @@ exports.handler = async (event) => {
         }
       }
 
+      // Classer les joueurs selon leur premier score.
       const sorted = Array.from(firstScores.values()).sort(
         (a, b) =>
           b.totalFragments - a.totalFragments ||
@@ -116,6 +133,7 @@ exports.handler = async (event) => {
           })
       );
 
+      // Gérer les ex æquo : même score = même rang.
       let previousScore = null;
       let currentRank = 0;
 
@@ -132,10 +150,16 @@ exports.handler = async (event) => {
         };
       });
 
-      return json(200, { chapter, ranking });
+      return json(200, {
+        chapter,
+        ranking
+      });
     }
 
-    return json(400, { error: "Action inconnue." });
+    return json(400, {
+      error: "Action inconnue."
+    });
+
   } catch (error) {
     console.error("Erreur classement :", error);
 
