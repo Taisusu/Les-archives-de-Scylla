@@ -1,0 +1,408 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>La Bibliothèque — Archives de Scylla</title>
+  <style>
+    :root {
+      --night: #080e1c;
+      --panel: #111b30;
+      --gold: #d9b76c;
+      --gold-light: #f1dca3;
+      --muted: #b8bfd0;
+      --border: #57482d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: #f5f0e5;
+      font-family: Georgia, "Times New Roman", serif;
+      background:
+        radial-gradient(ellipse at top, #1a2945 0%, transparent 58%),
+        var(--night);
+    }
+
+    header {
+      text-align: center;
+      padding: 48px 20px 28px;
+    }
+
+    .eyebrow {
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      font-size: .8rem;
+    }
+
+    h1 {
+      margin: 12px 0;
+      color: var(--gold-light);
+      font-size: clamp(2rem, 6vw, 3.6rem);
+      text-shadow: 0 0 25px #d9b76c25;
+    }
+
+    header p {
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    .back {
+      display: inline-block;
+      margin-top: 22px;
+      color: var(--gold-light);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      padding: 10px 16px;
+      border-radius: 5px;
+    }
+
+    main {
+      width: min(1180px, 92%);
+      margin: 0 auto 60px;
+    }
+
+    .volume {
+      margin: 24px 0 42px;
+    }
+
+    .volume-heading {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .volume-heading::after {
+      content: "";
+      height: 1px;
+      flex: 1;
+      background: linear-gradient(90deg, var(--border), transparent);
+    }
+
+    h2 {
+      color: var(--gold-light);
+      font-size: 1.6rem;
+      margin: 0;
+    }
+
+    .volume-subtitle {
+      color: var(--muted);
+      margin: 6px 0 0;
+      font-size: .95rem;
+    }
+
+    .books {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 24px;
+    }
+
+    .book {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 340px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background:
+        linear-gradient(145deg, #1b2b47 0%, #0d172a 62%, #080e1b 100%);
+      box-shadow: 0 12px 28px #0005;
+      transition: transform .2s, border-color .2s;
+    }
+
+    .book.available:hover {
+      transform: translateY(-5px);
+      border-color: var(--gold);
+    }
+
+    .book::before {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border: 1px solid #d9b76c50;
+      border-radius: 5px;
+      pointer-events: none;
+    }
+
+    .book-top, .book-art, .book-info, .book-action {
+      position: relative;
+      z-index: 1;
+    }
+
+    .book-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--gold);
+      font-size: .76rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .book-art {
+      height: 125px;
+      display: grid;
+      place-items: center;
+      margin: 12px 0;
+      color: var(--gold);
+      background: radial-gradient(ellipse, #d9b76c12, transparent 70%);
+    }
+
+    .book-art svg {
+      width: 92px;
+      height: 100px;
+      filter: drop-shadow(0 0 10px #d9b76c20);
+    }
+
+    .book-info {
+      text-align: center;
+      flex: 1;
+    }
+
+    .book-info h3 {
+      color: var(--gold-light);
+      font-size: 1.15rem;
+      line-height: 1.4;
+      margin: 5px 0 9px;
+    }
+
+    .book-info p {
+      color: var(--muted);
+      font-size: .88rem;
+      line-height: 1.5;
+      margin: 0 0 15px;
+    }
+
+    .book-action {
+      display: block;
+      text-align: center;
+      text-decoration: none;
+      padding: 11px 12px;
+      border-radius: 4px;
+      font-family: inherit;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .available .book-action {
+      color: #111827;
+      background: linear-gradient(135deg, #f1dca3, #c49b4c);
+    }
+
+    .sealed .book-action {
+      color: #c5c9d2;
+      background: #222d42;
+      border: 1px solid #46516a;
+      cursor: default;
+    }
+
+    .sealed {
+      opacity: .78;
+    }
+
+    .status {
+      text-align: center;
+      color: var(--muted);
+      padding: 30px 12px;
+      line-height: 1.7;
+    }
+
+    .error { color: #f0b5a8; }
+
+    footer {
+      text-align: center;
+      padding: 25px 15px 35px;
+      color: #8993a8;
+      font-size: .85rem;
+      border-top: 1px solid #ffffff10;
+    }
+
+    @media (max-width: 520px) {
+      header { padding-top: 34px; }
+      .books { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .book { padding: 13px; min-height: 315px; }
+      .book-art { height: 100px; }
+      .book-art svg { width: 75px; height: 85px; }
+      .book-info h3 { font-size: 1rem; }
+      .book-info p { font-size: .8rem; }
+      .book-top { font-size: .65rem; letter-spacing: .8px; }
+    }
+
+    @media (max-width: 350px) {
+      .books { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="eyebrow">Les Archives de Scylla</div>
+    <h1>La Bibliothèque</h1>
+    <p>Chaque grimoire renferme une épreuve. Certains secrets attendent encore d'être révélés…</p>
+    <a class="back" href="index.html">← Retour à l'accueil</a>
+  </header>
+
+  <main>
+    <div id="library-status" class="status">Ouverture des Archives…</div>
+    <div id="library"></div>
+  </main>
+
+  <footer>Les secrets n'appartiennent qu'à ceux qui osent les découvrir.</footer>
+
+  <script>
+    const library = document.getElementById("library");
+    const status = document.getElementById("library-status");
+
+    function roman(number) {
+      const values = [
+        [1000, "M"], [900, "CM"], [500, "D"], [400, "CD"],
+        [100, "C"], [90, "XC"], [50, "L"], [40, "XL"],
+        [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]
+      ];
+      let result = "";
+      for (const [value, symbol] of values) {
+        while (number >= value) {
+          result += symbol;
+          number -= value;
+        }
+      }
+      return result || String(number);
+    }
+
+    function bookArtwork() {
+      return `
+        <svg viewBox="0 0 100 110" fill="none"
+             xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M17 17 Q50 7 83 17 L83 91 Q50 81 17 91 Z"
+                stroke="currentColor" stroke-width="2"/>
+          <path d="M23 23 Q50 15 77 23 L77 84 Q50 76 23 84 Z"
+                stroke="currentColor" stroke-width="1"/>
+          <path d="M50 20 V79" stroke="currentColor" stroke-width="2"/>
+          <path d="M31 35 Q40 28 47 35 V69 Q39 63 31 69 Z"
+                stroke="currentColor" stroke-width="1.5"/>
+          <path d="M53 35 Q60 28 69 35 V69 Q61 63 53 69 Z"
+                stroke="currentColor" stroke-width="1.5"/>
+          <path d="M50 40 L54 47 L62 48 L56 54 L57 62 L50 58 L43 62 L44 54 L38 48 L46 47 Z"
+                stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="50" cy="49" r="25" stroke="currentColor"
+                  stroke-width=".7" stroke-dasharray="2 4"/>
+          <path d="M12 12 L18 12 L18 18 M82 12 L88 12 L88 18
+                   M12 90 L18 90 L18 96 M82 90 L88 90 L88 96"
+                stroke="currentColor" stroke-width="1.5"/>
+        </svg>`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;",
+        '"': "&quot;", "'": "&#39;"
+      })[char]);
+    }
+
+    function renderLibrary(chapters) {
+      library.innerHTML = "";
+
+      const maxVolume = Math.max(
+        1,
+        ...chapters.map(chapter => Number(chapter.volume_number) || 1)
+      );
+
+      const volumes = new Map();
+      for (let volume = 1; volume <= maxVolume; volume++) {
+        volumes.set(volume, []);
+      }
+
+      for (const chapter of chapters) {
+        const volume = Number(chapter.volume_number) || 1;
+        if (!volumes.has(volume)) volumes.set(volume, []);
+        volumes.get(volume).push(chapter);
+      }
+
+      for (const [volumeNumber, volumeChapters] of volumes) {
+        const section = document.createElement("section");
+        section.className = "volume";
+
+        const cards = [];
+
+        for (const chapter of volumeChapters) {
+          const chapterNumber = Number(chapter.chapter_number) || 0;
+          const published = chapter.is_published === true;
+          const teaser = chapter.teaser_title || chapter.title ||
+            `Chapitre ${roman(chapterNumber)}`;
+
+          cards.push(`
+            <article class="book ${published ? "available" : "sealed"}">
+              <div class="book-top">
+                <span>Chapitre ${roman(chapterNumber)}</span>
+                <span>${published ? "Ouvert" : "Scellé"}</span>
+              </div>
+              <div class="book-art">${bookArtwork()}</div>
+              <div class="book-info">
+                <h3>${escapeHtml(teaser)}</h3>
+                <p>${published
+                  ? "Le grimoire est ouvert. L'épreuve vous attend."
+                  : "Ce secret n'a pas encore été dévoilé."}</p>
+              </div>
+              ${published
+                ? `<a class="book-action" href="quiz.html?chapterId=${encodeURIComponent(chapter.id)}">PARTICIPER</a>`
+                : `<span class="book-action">SCELLÉ</span>`}
+            </article>
+          `);
+        }
+
+        section.innerHTML = `
+          <div class="volume-heading">
+            <div>
+              <h2>Volume ${roman(volumeNumber)}</h2>
+              <p class="volume-subtitle">${volumeChapters.length} grimoire(s) dans les Archives</p>
+            </div>
+          </div>
+          <div class="books">${cards.join("")}</div>
+        `;
+        library.appendChild(section);
+      }
+
+      if (chapters.length === 0) {
+        status.textContent = "Aucun grimoire n'est encore répertorié.";
+        return;
+      }
+
+      status.style.display = "none";
+    }
+
+    async function loadLibrary() {
+      try {
+        const response = await fetch("/.netlify/functions/quiz", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "listChapters" })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Impossible de consulter les Archives.");
+        }
+
+        const chapters = Array.isArray(data.chapters) ? data.chapters : [];
+        renderLibrary(chapters);
+      } catch (error) {
+        status.textContent =
+          "Impossible d'ouvrir les Archives pour le moment. Réessaie dans quelques instants.";
+        status.classList.add("error");
+        console.error("Erreur de chargement des chapitres :", error);
+      }
+    }
+
+    loadLibrary();
+  </script>
+</body>
+</html>
