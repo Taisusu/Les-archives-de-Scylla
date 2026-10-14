@@ -48,17 +48,19 @@ async function supabase(path, options = {}) {
 function getOptions(question) {
   if (!Array.isArray(question.options)) return [];
 
-  return question.options.map((option) => {
-    if (typeof option === "string" || typeof option === "number") {
-      return String(option);
-    }
+  return question.options
+    .map((option) => {
+      if (typeof option === "string" || typeof option === "number") {
+        return String(option);
+      }
 
-    if (option && typeof option === "object") {
-      return String(option.text ?? option.label ?? "");
-    }
+      if (option && typeof option === "object") {
+        return String(option.text ?? option.label ?? "");
+      }
 
-    return "";
-  }).filter(Boolean);
+      return "";
+    })
+    .filter(Boolean);
 }
 
 function randomItem(items) {
@@ -102,14 +104,26 @@ exports.handler = async (event) => {
   }
 
   try {
+    // Vérifier la connexion à Supabase.
     if (input.action === "health") {
       await supabase("chapters?select=id&limit=1");
+
       return json(200, {
         success: true,
         message: "Connexion Supabase réussie."
       });
     }
 
+    // NOUVEAU : récupérer les chapitres publiés pour la page d'accueil.
+    if (input.action === "listChapters") {
+      const chapters = await supabase(
+        "chapters?is_published=eq.true&select=id,title,volume_number,chapter_number&order=volume_number.asc,chapter_number.asc"
+      );
+
+      return json(200, { chapters });
+    }
+
+    // Les actions du quiz nécessitent un identifiant de chapitre.
     const chapterId = Number(input.chapterId);
 
     if (!Number.isSafeInteger(chapterId) || chapterId < 1) {
@@ -127,10 +141,12 @@ exports.handler = async (event) => {
     );
 
     if (questions.length === 0) {
-      return json(400, { error: "Ce chapitre ne contient aucune question." });
+      return json(400, {
+        error: "Ce chapitre ne contient aucune question."
+      });
     }
 
-    // Créer une tentative de quiz.
+    // Démarrer une tentative de quiz.
     if (input.action === "start") {
       const pseudo = String(input.pseudo || "").trim();
 
@@ -161,14 +177,18 @@ exports.handler = async (event) => {
     const attempt = await getAttempt(input.attemptId);
 
     if (!attempt || Number(attempt.chapter_id) !== chapterId) {
-      return json(400, { error: "Tentative invalide. Recharge le chapitre." });
+      return json(400, {
+        error: "Tentative invalide. Recharge le chapitre."
+      });
     }
 
     if (attempt.submitted_at) {
-      return json(409, { error: "Cette tentative a déjà été envoyée." });
+      return json(409, {
+        error: "Cette tentative a déjà été envoyée."
+      });
     }
 
-    // Enregistrer le mode avant de révéler les propositions.
+    // Enregistrer définitivement le mode choisi pour une question.
     if (input.action === "chooseMode") {
       const questionId = Number(input.questionId);
       const mode = input.mode;
@@ -177,7 +197,9 @@ exports.handler = async (event) => {
         return json(400, { error: "Mode invalide." });
       }
 
-      const question = questions.find((q) => Number(q.id) === questionId);
+      const question = questions.find(
+        (q) => Number(q.id) === questionId
+      );
 
       if (!question) {
         return json(400, { error: "Question invalide." });
@@ -187,7 +209,7 @@ exports.handler = async (event) => {
         `quiz_attempt_modes?attempt_id=eq.${attempt.id}&question_id=eq.${questionId}&select=id,selected_mode,displayed_options`
       );
 
-      // Le mode ne peut pas être modifié après son premier enregistrement.
+      // Si un mode existe déjà, il ne peut plus être changé.
       if (existing.length) {
         return json(200, {
           mode: existing[0].selected_mode,
@@ -200,7 +222,10 @@ exports.handler = async (event) => {
       let displayedOptions = [];
 
       if (mode === "CARRE") {
-        if (question.question_type === "free_text" || allOptions.length < 4) {
+        if (
+          question.question_type === "free_text" ||
+          allOptions.length < 4
+        ) {
           return json(400, {
             error: "Le mode CARRÉ exige une question avec au moins quatre propositions."
           });
@@ -210,7 +235,10 @@ exports.handler = async (event) => {
       }
 
       if (mode === "DUO") {
-        if (question.question_type === "free_text" || allOptions.length < 2) {
+        if (
+          question.question_type === "free_text" ||
+          allOptions.length < 2
+        ) {
           return json(400, {
             error: "Le mode DUO exige une question à choix multiples."
           });
@@ -220,7 +248,9 @@ exports.handler = async (event) => {
           `questions?id=eq.${questionId}&select=correct_answers`
         );
 
-        const accepted = Array.isArray(fullQuestions[0]?.correct_answers)
+        const accepted = Array.isArray(
+          fullQuestions[0]?.correct_answers
+        )
           ? fullQuestions[0].correct_answers.map(normalize)
           : [];
 
@@ -240,12 +270,16 @@ exports.handler = async (event) => {
         );
 
         if (!distractors.length) {
-          return json(400, { error: "Propositions insuffisantes pour le mode DUO." });
+          return json(400, {
+            error: "Propositions insuffisantes pour le mode DUO."
+          });
         }
 
-        displayedOptions = [correctOption, randomItem(distractors)];
+        displayedOptions = [
+          correctOption,
+          randomItem(distractors)
+        ];
 
-        // Mélanger l'ordre des deux propositions.
         if (Math.random() < 0.5) {
           displayedOptions.reverse();
         }
@@ -269,11 +303,14 @@ exports.handler = async (event) => {
       });
     }
 
-    // Corriger et enregistrer une tentative.
+    // Corriger et enregistrer les réponses.
     if (input.action === "submit") {
       const answers = input.answers;
 
-      if (!Array.isArray(answers) || answers.length !== questions.length) {
+      if (
+        !Array.isArray(answers) ||
+        answers.length !== questions.length
+      ) {
         return json(400, {
           error: "Le nombre de réponses ne correspond pas au quiz."
         });
@@ -302,7 +339,10 @@ exports.handler = async (event) => {
       );
 
       const modesByQuestion = new Map(
-        savedModes.map((item) => [Number(item.question_id), item])
+        savedModes.map((item) => [
+          Number(item.question_id),
+          item
+        ])
       );
 
       if (modesByQuestion.size !== questions.length) {
@@ -324,7 +364,9 @@ exports.handler = async (event) => {
         const savedMode = modesByQuestion.get(Number(question.id));
 
         if (!answer || !savedMode) {
-          return json(400, { error: "Une question est incomplète." });
+          return json(400, {
+            error: "Une question est incomplète."
+          });
         }
 
         if (answer.mode !== savedMode.selected_mode) {
@@ -337,7 +379,9 @@ exports.handler = async (event) => {
         const responseText = answer.answer.trim();
 
         if (mode === "CARRE" || mode === "DUO") {
-          const shownOptions = Array.isArray(savedMode.displayed_options)
+          const shownOptions = Array.isArray(
+            savedMode.displayed_options
+          )
             ? savedMode.displayed_options
             : [];
 
@@ -356,7 +400,12 @@ exports.handler = async (event) => {
           (value) => normalize(value) === normalize(responseText)
         );
 
-        const basePoints = { CASH: 5, CARRE: 3, DUO: 1 }[mode];
+        const basePoints = {
+          CASH: 5,
+          CARRE: 3,
+          DUO: 1
+        }[mode];
+
         const points = correct
           ? basePoints * (question.is_double ? 2 : 1)
           : 0;
@@ -411,7 +460,9 @@ exports.handler = async (event) => {
 
       await supabase(`quiz_attempts?id=eq.${attempt.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ submitted_at: new Date().toISOString() })
+        body: JSON.stringify({
+          submitted_at: new Date().toISOString()
+        })
       });
 
       return json(200, {
