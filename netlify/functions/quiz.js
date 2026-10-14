@@ -8,8 +8,7 @@ const json = (statusCode, data) => ({
   body: JSON.stringify(data)
 });
 
-// Normalisation cohérente avec le contrôle SQL :
-// casse, accents, espaces et ponctuation ignorés.
+// Normalisation des pseudos : casse, accents, espaces et ponctuation ignorés.
 const normalize = (value) =>
   String(value ?? "")
     .normalize("NFD")
@@ -41,7 +40,6 @@ async function supabase(path, options = {}) {
     console.error("Erreur Supabase :", response.status, body);
 
     let details = {};
-
     try {
       details = body ? JSON.parse(body) : {};
     } catch {
@@ -90,7 +88,7 @@ async function getPublishedChapter(chapterId) {
   return chapters[0] || null;
 }
 
-// Vérifie si le pseudo possède déjà un résultat pour ce chapitre.
+// Vérifie si le pseudo a déjà un résultat pour ce chapitre.
 async function hasSubmittedChapter(chapterId, pseudo) {
   const rows = await supabase(
     `submissions?chapter_id=eq.${chapterId}&select=discord_pseudo`
@@ -146,7 +144,7 @@ exports.handler = async (event) => {
       });
     }
 
-    // Liste des chapitres, publiés ou non.
+    // Liste des chapitres.
     if (input.action === "listChapters") {
       const chapters = await supabase(
         "chapters?select=id,title,volume_number,chapter_number,is_published&order=volume_number.asc,chapter_number.asc"
@@ -193,7 +191,7 @@ exports.handler = async (event) => {
 
       if (await hasSubmittedChapter(chapterId, pseudo)) {
         return json(409, {
-          error: "Ton résultat pour ce chapitre est déjà scellé. Seul ton premier envoi compte au classement."
+          error: "Tu as déjà envoyé tes réponses pour ce chapitre. Ton premier résultat reste définitif."
         });
       }
 
@@ -313,7 +311,6 @@ exports.handler = async (event) => {
         }
 
         const correctOption = randomItem(correctOptions);
-
         const distractors = allOptions.filter(
           (option) => normalize(option) !== normalize(correctOption)
         );
@@ -346,8 +343,6 @@ exports.handler = async (event) => {
           })
         });
       } catch (error) {
-        // Si deux demandes choisissent simultanément un mode,
-        // ne pas prétendre que le nouveau choix a été enregistré.
         if (error.code === "23505" || error.status === 409) {
           const saved = await supabase(
             `quiz_attempt_modes?attempt_id=eq.${attempt.id}&question_id=eq.${questionId}&select=selected_mode,displayed_options`
@@ -376,7 +371,7 @@ exports.handler = async (event) => {
     if (input.action === "submit") {
       if (await hasSubmittedChapter(chapterId, attempt.discord_pseudo)) {
         return json(409, {
-          error: "Un résultat a déjà été scellé pour ce pseudo dans ce chapitre. Le premier envoi reste définitif."
+          error: "Tu as déjà envoyé tes réponses pour ce chapitre. Ton premier résultat reste définitif."
         });
       }
 
@@ -526,16 +521,13 @@ exports.handler = async (event) => {
       }
 
       // Dernière vérification applicative avant insertion.
-      // Le déclencheur SQL reste la protection contre les courses simultanées.
       if (await hasSubmittedChapter(chapterId, attempt.discord_pseudo)) {
         return json(409, {
-          error: "Un résultat a déjà été scellé pour ce pseudo dans ce chapitre. Le premier envoi reste définitif."
+          error: "Tu as déjà envoyé tes réponses pour ce chapitre. Ton premier résultat reste définitif."
         });
       }
 
       // Créer la soumission.
-      // La protection SQL refuse les doublons même si deux envois
-      // arrivent simultanément.
       let submissions;
 
       try {
@@ -553,7 +545,7 @@ exports.handler = async (event) => {
       } catch (error) {
         if (error.code === "23505" || error.status === 409) {
           return json(409, {
-            error: "Ton résultat pour ce chapitre a déjà été enregistré. Le premier envoi reste définitif."
+            error: "Tu as déjà envoyé tes réponses pour ce chapitre. Ton premier résultat reste définitif."
           });
         }
 
@@ -594,12 +586,17 @@ exports.handler = async (event) => {
     return json(400, {
       error: "Action inconnue."
     });
-
   } catch (error) {
     console.error("Erreur quiz :", error);
 
+    if (error?.code === "23505" || error?.status === 409) {
+      return json(409, {
+        error: "Tu as déjà envoyé tes réponses pour ce chapitre. Ton premier résultat reste définitif."
+      });
+    }
+
     return json(500, {
-      error: "Une erreur est survenue. Réessaie plus tard."
+      error: "Une erreur technique est survenue lors de l'envoi. Réessaie plus tard."
     });
   }
 };
