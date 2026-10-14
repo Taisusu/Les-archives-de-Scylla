@@ -1,4 +1,4 @@
-
+```javascript
 const json = (statusCode, data) => ({
   statusCode,
   headers: {
@@ -27,20 +27,34 @@ async function supabase(path) {
   const body = await response.text();
 
   if (!response.ok) {
-    console.error("Erreur Supabase classement :", response.status, body);
+    console.error(
+      "Erreur Supabase classement :",
+      response.status,
+      body
+    );
+
     throw new Error("Impossible de récupérer les classements.");
   }
 
   return body ? JSON.parse(body) : null;
 }
 
+// Normalisation alignée sur la règle SQL :
+// minuscules, accents courants supprimés, espaces et ponctuation ignorés.
 function normalizePseudo(value) {
   return String(value ?? "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase("fr")
-    .trim()
-    .replace(/\s+/g, " ");
+    .replace(/[^a-z0-9à-ÿ]/g, "")
+    .replace(/[àáâãäåāăą]/g, "a")
+    .replace(/[èéêëēėęě]/g, "e")
+    .replace(/[ìíîïīįı]/g, "i")
+    .replace(/[òóôõöøōő]/g, "o")
+    .replace(/[ùúûüūůűų]/g, "u")
+    .replace(/[çćč]/g, "c")
+    .replace(/[ñńň]/g, "n")
+    .replace(/[ýÿ]/g, "y");
 }
 
 exports.handler = async (event) => {
@@ -93,14 +107,13 @@ exports.handler = async (event) => {
         });
       }
 
-      // Récupérer les résultats dans l'ordre de leur enregistrement.
-      // submitted_at est la colonne de date présente dans Supabase.
+      // Le premier résultat est déterminé par la date d'envoi,
+      // avec l'identifiant comme départage déterministe.
       const submissions = await supabase(
         `submissions?chapter_id=eq.${chapterId}&select=id,discord_pseudo,total_fragments,submitted_at&order=submitted_at.asc,id.asc`
       );
 
-      // Conserver uniquement le premier résultat de chaque pseudo.
-      // Les accents, majuscules et espaces multiples sont normalisés.
+      // Garder uniquement la première soumission de chaque pseudo.
       const firstScores = new Map();
 
       for (const submission of submissions || []) {
@@ -115,7 +128,6 @@ exports.handler = async (event) => {
           continue;
         }
 
-        // Le premier résultat rencontré reste définitif.
         if (!firstScores.has(key)) {
           firstScores.set(key, {
             pseudo,
@@ -124,7 +136,7 @@ exports.handler = async (event) => {
         }
       }
 
-      // Classer les joueurs selon leur premier score.
+      // Trier les joueurs par leur premier score.
       const sorted = Array.from(firstScores.values()).sort(
         (a, b) =>
           b.totalFragments - a.totalFragments ||
@@ -133,7 +145,7 @@ exports.handler = async (event) => {
           })
       );
 
-      // Gérer les ex æquo : même score = même rang.
+      // Ex æquo : même score = même rang.
       let previousScore = null;
       let currentRank = 0;
 
@@ -168,3 +180,4 @@ exports.handler = async (event) => {
     });
   }
 };
+```
