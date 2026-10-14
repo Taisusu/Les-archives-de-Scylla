@@ -1,0 +1,425 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080e20">
+  <title>Tableau d'honneur — Archives de Scylla</title>
+
+  <style>
+    :root {
+      --night: #080e20;
+      --blue: #101b35;
+      --gold: #d8b66b;
+      --pale: #f1e5c9;
+      --muted: #b4b5c5;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at 50% 10%, #1c2948 0%, transparent 55%),
+        var(--night);
+      color: var(--pale);
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    header {
+      padding: 22px 7%;
+      border-bottom: 1px solid #d8b66b35;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .brand {
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-size: 14px;
+    }
+
+    header a, .back {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    header a:hover, .back:hover { color: var(--gold); }
+
+    main {
+      width: min(900px, 92%);
+      margin: auto;
+      padding: 55px 0 70px;
+    }
+
+    .eyebrow {
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: clamp(30px, 6vw, 46px);
+      font-weight: normal;
+      margin: 16px 0 10px;
+    }
+
+    h1 span { color: var(--gold); font-style: italic; }
+
+    .subtitle {
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.8;
+      margin-bottom: 36px;
+    }
+
+    .podium {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items: end;
+      gap: 12px;
+      margin: 35px 0 45px;
+    }
+
+    .podium-place {
+      text-align: center;
+      padding: 20px 8px;
+      border: 1px solid #d8b66b45;
+      background: #101b3580;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .podium-place.first {
+      border-color: var(--gold);
+      padding-top: 30px;
+      padding-bottom: 30px;
+    }
+
+    .medal {
+      font-size: 34px;
+      margin-bottom: 12px;
+    }
+
+    .place-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .player-name {
+      color: var(--pale);
+      font-size: 17px;
+      font-weight: normal;
+      margin: 8px 0;
+    }
+
+    .score {
+      color: var(--gold);
+      font-size: 15px;
+    }
+
+    .table-title {
+      text-align: center;
+      color: var(--gold);
+      font-size: 23px;
+      font-weight: normal;
+      margin: 0 0 18px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid #d8b66b45;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 15px 18px;
+      border-bottom: 1px solid #d8b66b25;
+    }
+
+    th {
+      background: #101b35;
+      color: var(--gold);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: normal;
+    }
+
+    td { color: var(--pale); }
+
+    td.rank {
+      width: 85px;
+      color: var(--gold);
+      font-weight: bold;
+    }
+
+    td.points {
+      text-align: right;
+      white-space: nowrap;
+      color: var(--gold);
+    }
+
+    th:last-child { text-align: right; }
+
+    tbody tr:last-child td { border-bottom: none; }
+
+    tbody tr:nth-child(even) { background: #101b353d; }
+
+    .status {
+      text-align: center;
+      padding: 25px 12px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .error { color: #f0a6a6; }
+
+    .back-button {
+      display: block;
+      width: fit-content;
+      margin: 35px auto 0;
+      padding: 13px 18px;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 11px;
+      transition: .2s;
+    }
+
+    .back-button:hover {
+      background: var(--gold);
+      color: var(--night);
+    }
+
+    footer {
+      border-top: 1px solid #d8b66b35;
+      padding: 25px 15px;
+      text-align: center;
+      color: #9296a9;
+      font-size: 12px;
+    }
+
+    [hidden] { display: none !important; }
+
+    @media (max-width: 600px) {
+      header { padding: 18px 5%; }
+      .brand { font-size: 11px; letter-spacing: 1px; }
+      main { padding-top: 40px; }
+      .podium { gap: 6px; }
+      .podium-place { padding: 14px 5px; }
+      .podium-place.first { padding: 20px 5px; }
+      .medal { font-size: 26px; }
+      .player-name { font-size: 13px; }
+      .score { font-size: 12px; }
+      .place-label { font-size: 9px; letter-spacing: 0; }
+      th, td { padding: 12px 10px; font-size: 13px; }
+      td.rank { width: 55px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="brand">✦ Archives de Scylla</div>
+    <a href="classements.html">← Tous les classements</a>
+  </header>
+
+  <main>
+    <div class="eyebrow">Les noms gravés dans les Archives</div>
+    <h1 id="chapter-title">Tableau <span>d'honneur</span></h1>
+    <p id="chapter-subtitle" class="subtitle">
+      Chargement des résultats…
+    </p>
+
+    <div id="status" class="status" aria-live="polite">
+      Consultation du registre…
+    </div>
+
+    <section id="results" hidden>
+      <div id="podium" class="podium"></div>
+
+      <h2 class="table-title">Classement complet</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Place</th>
+              <th>Participant</th>
+              <th>Fragments</th>
+            </tr>
+          </thead>
+          <tbody id="ranking-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <a class="back-button" href="classements.html">
+      ← Retour aux classements
+    </a>
+  </main>
+
+  <footer>LES ARCHIVES DE SCYLLA · Chaque Fragment compte.</footer>
+
+  <script>
+    const statusElement = document.getElementById("status");
+    const resultsElement = document.getElementById("results");
+    const podiumElement = document.getElementById("podium");
+    const rankingBody = document.getElementById("ranking-body");
+    const chapterTitle = document.getElementById("chapter-title");
+    const chapterSubtitle = document.getElementById("chapter-subtitle");
+
+    const medals = ["🥇", "🥈", "🥉"];
+
+    function createPodiumPlace(player, index) {
+      const place = document.createElement("div");
+      place.className = "podium-place" + (index === 0 ? " first" : "");
+
+      const medal = document.createElement("div");
+      medal.className = "medal";
+      medal.textContent = medals[index];
+
+      const label = document.createElement("div");
+      label.className = "place-label";
+      label.textContent = ` ${player.rank}${player.rank === 1 ? "re" : "e"} place`;
+
+      const name = document.createElement("div");
+      name.className = "player-name";
+      name.textContent = player.pseudo;
+
+      const score = document.createElement("div");
+      score.className = "score";
+      score.textContent = `${player.totalFragments} Fragments`;
+
+      place.append(medal, label, name, score);
+      return place;
+    }
+
+    function showStatus(message, isError = false) {
+      statusElement.hidden = false;
+      statusElement.textContent = message;
+      statusElement.classList.toggle("error", isError);
+    }
+
+    async function loadRanking() {
+      const params = new URLSearchParams(window.location.search);
+      const chapterId = params.get("chapterId");
+
+      if (!chapterId || !/^\d+$/.test(chapterId)) {
+        showStatus("Le chapitre demandé est invalide.", true);
+        chapterSubtitle.textContent = "";
+        return;
+      }
+
+      try {
+        const response = await fetch("/.netlify/functions/leaderboard", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "chapterRanking",
+            chapterId
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Chargement impossible.");
+        }
+
+        const chapter = data.chapter;
+        const ranking = Array.isArray(data.ranking) ? data.ranking : [];
+
+        document.title =
+          `Classement — Volume ${chapter.volume_number}, Chapitre ${chapter.chapter_number}`;
+
+        chapterTitle.replaceChildren(
+          document.createTextNode(
+            `Volume ${chapter.volume_number} · Chapitre ${chapter.chapter_number}`
+          )
+        );
+
+        chapterSubtitle.textContent = chapter.title;
+
+        if (ranking.length === 0) {
+          showStatus("Aucun participant n'a encore de résultat enregistré pour ce Chapitre.");
+          return;
+        }
+
+        podiumElement.replaceChildren();
+        rankingBody.replaceChildren();
+
+        // Ordre visuel : deuxième, premier, troisième.
+        const podiumOrder = [
+          ranking[1],
+          ranking[0],
+          ranking[2]
+        ];
+
+        podiumOrder.forEach((player, index) => {
+          if (player) {
+            const actualRank = player.rank - 1;
+            podiumElement.append(createPodiumPlace(player, actualRank));
+          } else {
+            const empty = document.createElement("div");
+            empty.className = "podium-place";
+            empty.setAttribute("aria-hidden", "true");
+            podiumElement.append(empty);
+          }
+        });
+
+        ranking.forEach((player) => {
+          const row = document.createElement("tr");
+
+          const rankCell = document.createElement("td");
+          rankCell.className = "rank";
+          rankCell.textContent = player.rank <= 3
+            ? medals[player.rank - 1]
+            : `${player.rank}e`;
+
+          const pseudoCell = document.createElement("td");
+          pseudoCell.textContent = player.pseudo;
+
+          const scoreCell = document.createElement("td");
+          scoreCell.className = "points";
+          scoreCell.textContent = `${player.totalFragments} Fragments`;
+
+          row.append(rankCell, pseudoCell, scoreCell);
+          rankingBody.append(row);
+        });
+
+        statusElement.hidden = true;
+        resultsElement.hidden = false;
+      } catch (error) {
+        showStatus(
+          "Le classement est momentanément inaccessible. Réessaie dans quelques instants.",
+          true
+        );
+        console.error("Chargement du tableau d'honneur :", error);
+      }
+    }
+
+    loadRanking();
+  </script>
+</body>
+</html>
