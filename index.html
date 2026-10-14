@@ -1,0 +1,295 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080e20">
+  <title>Les Archives de Scylla</title>
+  <meta name="description" content="Entrez dans les Archives de Scylla. Franchissez les Épreuves, récoltez les Fragments et inscrivez votre nom dans la légende.">
+
+  <style>
+    :root {
+      --night: #080e20;
+      --blue: #101b35;
+      --gold: #d8b66b;
+      --pale: #f1e5c9;
+      --muted: #b4b5c5;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 50% 20%, #1c2948 0%, transparent 55%),
+        var(--night);
+      color: var(--pale);
+      font-family: Georgia, "Times New Roman", serif;
+      min-height: 100vh;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 22px 7%;
+      border-bottom: 1px solid #d8b66b35;
+    }
+
+    .brand {
+      color: var(--gold);
+      letter-spacing: 2px;
+      font-size: 15px;
+      text-transform: uppercase;
+    }
+
+    .nav-note {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    main {
+      width: min(1000px, 90%);
+      margin: auto;
+    }
+
+    .hero {
+      min-height: 72vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 65px 15px 55px;
+    }
+
+    .seal {
+      width: 112px;
+      height: 112px;
+      border: 1px solid var(--gold);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 53px;
+      color: var(--gold);
+      box-shadow: 0 0 45px #d8b66b18,
+                  inset 0 0 25px #d8b66b12;
+      margin-bottom: 30px;
+    }
+
+    .eyebrow {
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 5px;
+      font-size: 12px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      font-size: clamp(36px, 7vw, 70px);
+      font-weight: normal;
+      line-height: 1.08;
+      margin: 0;
+      text-shadow: 0 0 35px #d8b66b18;
+    }
+
+    h1 span {
+      display: block;
+      color: var(--gold);
+      font-style: italic;
+    }
+
+    .ornament {
+      color: var(--gold);
+      letter-spacing: 8px;
+      margin: 28px 0;
+    }
+
+    .intro {
+      max-width: 620px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.9;
+    }
+
+    .button {
+      display: inline-block;
+      margin-top: 25px;
+      padding: 15px 27px;
+      background: var(--gold);
+      color: #11182a;
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-size: 12px;
+      font-weight: bold;
+      border: 1px solid var(--gold);
+      transition: .2s;
+    }
+
+    .button:hover {
+      background: transparent;
+      color: var(--gold);
+    }
+
+    .section {
+      border-top: 1px solid #d8b66b40;
+      padding: 48px 0;
+      text-align: center;
+    }
+
+    h2 {
+      color: var(--gold);
+      font-size: 27px;
+      font-weight: normal;
+    }
+
+    .section p {
+      max-width: 620px;
+      margin: 15px auto;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-top: 32px;
+    }
+
+    .card {
+      border: 1px solid #d8b66b45;
+      background: #101b356b;
+      padding: 24px 15px;
+    }
+
+    .card .symbol {
+      font-size: 28px;
+      color: var(--gold);
+    }
+
+    .card h3 {
+      font-weight: normal;
+      color: var(--pale);
+    }
+
+    .card p { font-size: 14px; }
+
+    .coming {
+      display: inline-block;
+      border: 1px solid #d8b66b60;
+      color: var(--gold);
+      padding: 8px 13px;
+      font-size: 11px;
+      letter-spacing: 2px;
+      margin-top: 12px;
+    }
+
+    footer {
+      border-top: 1px solid #d8b66b35;
+      padding: 28px 15px;
+      text-align: center;
+      color: #9296a9;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    footer span { color: var(--gold); }
+
+    @media (max-width: 600px) {
+      nav { padding: 18px 5%; }
+      .brand { font-size: 12px; letter-spacing: 1px; }
+      .nav-note { font-size: 11px; }
+      .hero { min-height: auto; padding: 75px 5px; }
+      .intro { font-size: 15px; }
+      .cards { grid-template-columns: 1fr; }
+      .card { padding: 18px; }
+    }
+  </style>
+</head>
+
+<body>
+  <nav>
+    <div class="brand">✦ Les Archives de Scylla</div>
+    <div class="nav-note">Bibliothèque officielle</div>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <div class="seal" aria-hidden="true">✧</div>
+      <div class="eyebrow">Le savoir · Le mystère · La légende</div>
+
+      <h1>
+        Les Archives
+        <span>de Scylla</span>
+      </h1>
+
+      <div class="ornament">━━━━ ✦ ━━━━</div>
+
+      <p class="intro">
+        Certaines histoires méritent d'être racontées.
+        D'autres doivent être découvertes.
+        Ici, chaque Épreuve révèle un fragment de savoir,
+        chaque Chapitre écrit une nouvelle page,
+        et chaque Archiviste peut inscrire son nom dans la légende.
+      </p>
+
+      <a class="button" href="#bibliotheque">
+        Entrer dans la Bibliothèque
+      </a>
+    </section>
+
+    <section class="section" id="bibliotheque">
+      <div class="eyebrow">Les portes vous attendent</div>
+      <h2>La Bibliothèque de Scylla</h2>
+      <p>
+        Les Archives s'agrandissent. Explorez les univers,
+        relevez les défis et récoltez les Fragments de Savoir.
+        Votre prochaine Épreuve commence ici.
+      </p>
+
+      <div class="cards">
+        <article class="card">
+          <div class="symbol">📜</div>
+          <h3>Les Chapitres</h3>
+          <p>Des Épreuves de culture, de mémoire et d'observation.</p>
+          <span class="coming">BIENTÔT DISPONIBLE</span>
+        </article>
+
+        <article class="card">
+          <div class="symbol">🔐</div>
+          <h3>Les Secrets</h3>
+          <p>Des manuscrits dissimulés aux Archivistes les plus curieux.</p>
+          <span class="coming">BIENTÔT DISPONIBLE</span>
+        </article>
+
+        <article class="card">
+          <div class="symbol">🏆</div>
+          <h3>Le Classement</h3>
+          <p>Les Fragments récoltés et les noms gravés dans l'histoire.</p>
+          <span class="coming">BIENTÔT DISPONIBLE</span>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="ornament">✦</div>
+      <p>
+        « Les Origines s'écrivent une seule fois.
+        Les légendes, elles, continuent de s'écrire à chaque Chapitre. »
+      </p>
+      <div class="eyebrow">Le Gardien veille · Le Chroniqueur consigne</div>
+    </section>
+  </main>
+
+  <footer>
+    <span>LES ARCHIVES DE SCYLLA</span><br>
+    La Bibliothèque n'a pas encore révélé tous ses secrets.
+  </footer>
+</body>
+</html>
