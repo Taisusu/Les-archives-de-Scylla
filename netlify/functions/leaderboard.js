@@ -82,12 +82,14 @@ exports.handler = async (event) => {
         return json(404, { error: "Chapitre indisponible." });
       }
 
+      // Récupérer les résultats dans leur ordre d'enregistrement.
+      // Cela suppose que la colonne created_at existe dans submissions.
       const submissions = await supabase(
-        `submissions?chapter_id=eq.${chapterId}&select=discord_pseudo,total_fragments&order=total_fragments.desc`
+        `submissions?chapter_id=eq.${chapterId}&select=discord_pseudo,total_fragments,created_at&order=created_at.asc`
       );
 
-      // Un seul résultat par pseudo : son meilleur score au chapitre.
-      const bestScores = new Map();
+      // Conserver uniquement le premier résultat de chaque pseudo.
+      const firstScores = new Map();
 
       for (const submission of submissions || []) {
         const pseudo = String(submission.discord_pseudo ?? "").trim();
@@ -98,17 +100,15 @@ exports.handler = async (event) => {
           continue;
         }
 
-        const existing = bestScores.get(key);
-
-        if (!existing || score > existing.totalFragments) {
-          bestScores.set(key, {
+        if (!firstScores.has(key)) {
+          firstScores.set(key, {
             pseudo,
             totalFragments: score
           });
         }
       }
 
-      const sorted = Array.from(bestScores.values()).sort(
+      const sorted = Array.from(firstScores.values()).sort(
         (a, b) =>
           b.totalFragments - a.totalFragments ||
           a.pseudo.localeCompare(b.pseudo, "fr", {
