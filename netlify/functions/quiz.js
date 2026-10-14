@@ -1,4 +1,4 @@
-```javascript
+
 const json = (statusCode, data) => ({
   statusCode,
   headers: {
@@ -600,4 +600,3 @@ exports.handler = async (event) => {
     });
   }
 };
-```
