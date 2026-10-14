@@ -3,15 +3,14 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b1024">
   <title>Les Archives de Scylla — Épreuve</title>
-
   <style>
     :root {
       --night: #0b1024;
       --panel: #141d38;
-      --panel-light: #1b2748;
+      --light: #1b2748;
       --gold: #d8b56a;
       --gold-light: #f2dca0;
       --text: #f4f0e5;
@@ -21,42 +20,30 @@
       --success: #a8e6bc;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
       min-height: 100vh;
       padding: 24px 16px 50px;
-      background:
-        radial-gradient(ellipse at top, #202d50 0%, var(--night) 65%);
+      background: radial-gradient(ellipse at top, #202d50, var(--night) 65%);
       color: var(--text);
-      font-family: Georgia, "Times New Roman", serif;
-      line-height: 1.6;
+      font: 16px/1.6 Georgia, "Times New Roman", serif;
     }
 
-    .container {
-      max-width: 850px;
-      margin: 0 auto;
-    }
+    .container { max-width: 850px; margin: auto; }
 
-    header {
-      text-align: center;
-      padding: 22px 12px 30px;
-    }
+    header { text-align: center; padding: 22px 12px 30px; }
 
-    .symbol {
-      font-size: 42px;
-      color: var(--gold);
-    }
+    .symbol { color: var(--gold); font-size: 42px; }
 
     h1 {
       margin: 5px 0;
       color: var(--gold-light);
       font-size: clamp(27px, 5vw, 43px);
-      letter-spacing: 1px;
     }
+
+    h2, h3 { color: var(--gold-light); }
 
     .motto {
       max-width: 570px;
@@ -65,118 +52,77 @@
       font-style: italic;
     }
 
-    .ornament {
-      color: var(--gold);
-      letter-spacing: 8px;
-      margin-top: 20px;
-    }
+    .ornament { color: var(--gold); letter-spacing: 8px; margin-top: 20px; }
 
-    .panel,
-    .question,
-    .result-card {
-      background: linear-gradient(145deg, var(--panel), #10172d);
-      border: 1px solid var(--border);
-      border-radius: 12px;
+    .panel, .question, .result-card {
       padding: 22px;
       margin-bottom: 20px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: linear-gradient(145deg, var(--panel), #10172d);
       box-shadow: 0 8px 25px #00000024;
     }
 
-    h2, h3 {
-      color: var(--gold-light);
-      margin-top: 0;
-    }
+    label { display: block; margin-bottom: 7px; color: var(--muted); }
 
-    label {
-      display: block;
-      margin-bottom: 7px;
-      color: var(--muted);
-    }
-
-    input[type="text"],
-    input[type="number"] {
+    input[type="text"], input[type="number"] {
       width: 100%;
       padding: 13px;
+      margin-bottom: 16px;
       border: 1px solid var(--border);
       border-radius: 7px;
       background: #080e20;
       color: var(--text);
       font: inherit;
-      margin-bottom: 16px;
     }
 
-    button {
-      font: inherit;
-      cursor: pointer;
-      transition: 0.15s ease;
-    }
+    button { font: inherit; cursor: pointer; }
 
-    button:focus-visible,
-    input:focus-visible {
+    button:focus-visible, input:focus-visible {
       outline: 2px solid var(--gold-light);
       outline-offset: 3px;
     }
 
+    button:disabled { opacity: .55; cursor: not-allowed; }
+
     .primary {
       width: 100%;
       padding: 13px 18px;
-      background: linear-gradient(135deg, var(--gold-light), var(--gold));
-      color: #171426;
       border: 0;
       border-radius: 7px;
+      background: linear-gradient(135deg, var(--gold-light), var(--gold));
+      color: #171426;
       font-weight: bold;
-    }
-
-    .primary:hover {
-      filter: brightness(1.08);
-    }
-
-    button:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
     }
 
     .message {
       padding: 12px 14px;
-      border-radius: 7px;
       margin: 16px 0;
-      background: #17223c;
       border: 1px solid var(--border);
+      border-radius: 7px;
+      background: #17223c;
       overflow-wrap: anywhere;
     }
 
-    .message.error {
-      color: var(--error);
-      border-color: #8a4545;
-    }
+    .error { color: var(--error); border-color: #8a4545; }
+    .success { color: var(--success); border-color: #427957; }
+    .hidden { display: none !important; }
 
-    .message.success {
-      color: var(--success);
-      border-color: #427957;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .chapter-meta {
-      color: var(--muted);
-      margin-top: -8px;
-    }
+    .chapter-meta, .muted { color: var(--muted); }
 
     .progress {
       height: 7px;
-      background: #080e20;
-      border-radius: 10px;
-      overflow: hidden;
       margin: 14px 0 22px;
+      border-radius: 10px;
+      background: #080e20;
+      overflow: hidden;
     }
 
     .progress-bar {
       width: 0;
       height: 100%;
       background: var(--gold);
-      transition: width 0.2s;
+      transition: width .2s;
     }
 
     .question-number {
@@ -187,26 +133,22 @@
     }
 
     .question-text {
-      font-size: 20px;
       margin: 8px 0 20px;
+      font-size: 20px;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
     }
 
     .double {
-      color: var(--gold-light);
-      border: 1px solid var(--gold);
-      padding: 2px 8px;
-      border-radius: 5px;
-      font-size: 12px;
       margin-left: 6px;
+      padding: 2px 8px;
+      border: 1px solid var(--gold);
+      border-radius: 5px;
+      color: var(--gold-light);
+      font-size: 12px;
     }
 
-    .mode-label {
-      margin-top: 18px;
-      font-weight: bold;
-      color: var(--gold-light);
-    }
+    .mode-label { margin-top: 18px; color: var(--gold-light); font-weight: bold; }
 
     .mode-buttons {
       display: grid;
@@ -219,7 +161,7 @@
       padding: 10px 4px;
       border: 1px solid var(--border);
       border-radius: 7px;
-      background: var(--panel-light);
+      background: var(--light);
       color: var(--text);
     }
 
@@ -234,12 +176,12 @@
       align-items: flex-start;
       gap: 10px;
       padding: 12px;
+      margin: 9px 0;
       border: 1px solid var(--border);
       border-radius: 7px;
-      margin: 9px 0;
-      cursor: pointer;
       background: #10172d;
       color: var(--text);
+      cursor: pointer;
     }
 
     .choice:has(input:checked) {
@@ -247,672 +189,413 @@
       background: #242844;
     }
 
-    .choice input {
-      margin-top: 6px;
-      accent-color: var(--gold);
-    }
-
-    .choice span {
-      overflow-wrap: anywhere;
-    }
-
-    .answer-input {
-      margin-top: 8px;
-    }
-
-    .question-footer {
-      color: var(--muted);
-      font-size: 13px;
-      margin-top: 14px;
-    }
-
-    .score {
-      text-align: center;
-      padding: 25px 10px;
-    }
-
-    .score-number {
-      font-size: clamp(42px, 10vw, 64px);
-      font-weight: bold;
-      color: var(--gold-light);
-      line-height: 1.2;
-    }
-
-    .correction {
-      border-top: 1px solid var(--border);
-      padding: 18px 0;
-    }
-
-    .correction:first-of-type {
-      border-top: 0;
-    }
-
-    .correct {
-      color: var(--success);
-    }
-
-    .incorrect {
-      color: var(--error);
-    }
-
-    .explanation {
-      color: var(--muted);
-      white-space: pre-wrap;
-    }
-
-    footer {
-      text-align: center;
-      color: var(--muted);
-      font-size: 13px;
-      padding: 25px 10px;
-    }
+    .choice input { margin-top: 6px; accent-color: var(--gold); }
+    .choice span { overflow-wrap: anywhere; }
+    .answer-area { margin-top: 10px; }
+    .question-footer { margin-top: 14px; color: var(--muted); font-size: 13px; }
+    .score { padding: 25px 10px; text-align: center; }
+    .score-number { color: var(--gold-light); font-size: clamp(42px, 10vw, 64px); font-weight: bold; }
+    .correction { padding: 18px 0; border-top: 1px solid var(--border); }
+    .correction:first-of-type { border-top: 0; }
+    .correct { color: var(--success); }
+    .incorrect { color: var(--error); }
+    .explanation { color: var(--muted); white-space: pre-wrap; }
+    footer { padding: 25px 10px; color: var(--muted); text-align: center; font-size: 13px; }
 
     @media (max-width: 520px) {
-      body {
-        padding: 12px 10px 30px;
-      }
-
-      .panel, .question, .result-card {
-        padding: 16px;
-      }
-
-      .question-text {
-        font-size: 18px;
-      }
+      body { padding: 12px 10px 30px; }
+      .panel, .question, .result-card { padding: 16px; }
+      .question-text { font-size: 18px; }
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <header>
+<div class="container">
+  <header>
+    <div class="symbol">✦</div>
+    <h1>Les Archives de Scylla</h1>
+    <p class="motto">« Les Origines s'écrivent une seule fois. Les légendes, elles, continuent de s'écrire à chaque Chapitre. »</p>
+    <div class="ornament">✧ ━━━━━ ✧ ━━━━━ ✧</div>
+  </header>
+
+  <section id="setup" class="panel">
+    <h2>Entrer dans les Archives</h2>
+    <p>Gardien, renseigne ton pseudo pour commencer l'épreuve.</p>
+    <form id="load-form">
+      <label for="pseudo">Pseudo Discord</label>
+      <input id="pseudo" type="text" maxlength="50" required placeholder="Ton pseudo Discord">
+      <label for="chapter-id">Identifiant du chapitre (test uniquement)</label>
+      <input id="chapter-id" type="number" min="1" step="1" required placeholder="Ex. : 1">
+      <button class="primary" id="load-button" type="submit">Ouvrir le chapitre</button>
+    </form>
+    <div id="setup-message" class="message hidden" role="status"></div>
+  </section>
+
+  <section id="quiz-section" class="hidden">
+    <div class="panel">
+      <h2 id="chapter-title">Chapitre</h2>
+      <p id="chapter-meta" class="chapter-meta"></p>
+      <p>Choisis ton mode pour chaque question. Ton choix est définitif.</p>
+      <div class="progress"><div id="progress-bar" class="progress-bar"></div></div>
+      <p id="progress-text">0 réponse sur 0</p>
+    </div>
+    <form id="quiz-form">
+      <div id="questions-container"></div>
+      <button class="primary" id="submit-button" type="submit">Sceller mes réponses</button>
+    </form>
+    <div id="quiz-message" class="message hidden" role="status"></div>
+  </section>
+
+  <section id="results" class="hidden">
+    <div class="result-card score">
       <div class="symbol">✦</div>
-      <h1>Les Archives de Scylla</h1>
-      <p class="motto">
-        « Les Origines s'écrivent une seule fois.
-        Les légendes, elles, continuent de s'écrire à chaque Chapitre. »
-      </p>
-      <div class="ornament">✧ ━━━━━ ✧ ━━━━━ ✧</div>
-    </header>
+      <h2>Épreuve accomplie</h2>
+      <div id="score-number" class="score-number">0</div>
+      <p>Fragments d'archive obtenus</p>
+      <p id="result-pseudo"></p>
+    </div>
+    <div class="panel">
+      <h2>Le registre des réponses</h2>
+      <div id="corrections-container"></div>
+    </div>
+  </section>
 
-    <section id="setup" class="panel">
-      <h2>Entrer dans les Archives</h2>
-      <p>
-        Gardien, renseigne ton identité et le numéro du chapitre
-        auquel tu souhaites participer.
-      </p>
+  <footer>Les Archives de Scylla · Les secrets n'appartiennent qu'à ceux qui osent les découvrir.</footer>
+</div>
 
-      <form id="load-form">
-        <label for="pseudo">Ton pseudo Discord</label>
-        <input
-          id="pseudo"
-          type="text"
-          maxlength="60"
-          placeholder="Ex. : GardienDeScylla"
-          required
-        >
+<script>
+const API_URL = "/.netlify/functions/quiz";
 
-        <label for="chapter-id">Identifiant du chapitre</label>
-        <input
-          id="chapter-id"
-          type="number"
-          min="1"
-          step="1"
-          placeholder="Ex. : 1"
-          required
-        >
+const setup = document.getElementById("setup");
+const quizSection = document.getElementById("quiz-section");
+const results = document.getElementById("results");
+const loadForm = document.getElementById("load-form");
+const quizForm = document.getElementById("quiz-form");
+const loadButton = document.getElementById("load-button");
+const submitButton = document.getElementById("submit-button");
+const setupMessage = document.getElementById("setup-message");
+const quizMessage = document.getElementById("quiz-message");
+const questionsContainer = document.getElementById("questions-container");
+const correctionsContainer = document.getElementById("corrections-container");
 
-        <button class="primary" id="load-button" type="submit">
-          Ouvrir le chapitre
-        </button>
-      </form>
+let currentChapter = null;
+let currentQuestions = [];
+let attemptId = null;
+let playerPseudo = "";
+let modes = {};
+let answers = {};
+let submitted = false;
 
-      <div id="setup-message" class="message hidden" role="status"></div>
-    </section>
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[c]);
+}
 
-    <section id="quiz-section" class="hidden">
-      <div class="panel">
-        <h2 id="chapter-title">Chapitre</h2>
-        <p id="chapter-meta" class="chapter-meta"></p>
-        <p>
-          Choisis ton mode pour chaque question, puis sélectionne
-          ta réponse. Une question sans réponse ne pourra pas être envoyée.
-        </p>
-        <div class="progress">
-          <div id="progress-bar" class="progress-bar"></div>
+function message(element, text, type = "") {
+  element.textContent = text;
+  element.className = "message" + (type ? " " + type : "");
+}
+
+function clearMessage(element) {
+  element.textContent = "";
+  element.className = "message hidden";
+}
+
+async function callAPI(payload) {
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data.error) {
+    throw new Error(data.error || "La requête a échoué.");
+  }
+  return data;
+}
+
+function getOptions(question) {
+  if (!Array.isArray(question.options)) return [];
+  return question.options.map(option => {
+    if (typeof option === "string" || typeof option === "number") return String(option);
+    if (option && typeof option === "object") return String(option.text ?? option.label ?? "");
+    return "";
+  }).filter(Boolean);
+}
+
+function updateProgress() {
+  const total = currentQuestions.length;
+  const answered = currentQuestions.filter(q => String(answers[q.id] ?? "").trim()).length;
+  document.getElementById("progress-bar").style.width =
+    (total ? answered / total * 100 : 0) + "%";
+  document.getElementById("progress-text").textContent =
+    `${answered} réponse(s) renseignée(s) sur ${total}`;
+}
+
+function renderQuestions() {
+  questionsContainer.innerHTML = currentQuestions.map((q, index) => {
+    const mode = modes[q.id] || "";
+    const options = getOptions(q);
+    const questionNumber = q.question_number ?? index + 1;
+    const isFreeText = q.question_type === "free_text";
+    let answerHTML = "";
+
+    if (!mode) {
+      answerHTML = `<p class="muted">Choisis un mode pour révéler le champ de réponse.</p>`;
+    } else if (mode === "CASH" || isFreeText) {
+      answerHTML = `
+        <label for="answer-${q.id}">Ta réponse</label>
+        <input class="answer-input" id="answer-${q.id}" type="text"
+          data-answer-for="${q.id}" maxlength="1000"
+          value="${escapeHTML(answers[q.id] || "")}"
+          placeholder="Écris ta réponse..." required>
+      `;
+    } else {
+      const shownOptions = q.displayedOptions || [];
+      answerHTML = shownOptions.map(option => `
+        <label class="choice">
+          <input type="radio" name="answer-${q.id}" value="${escapeHTML(option)}"
+            ${answers[q.id] === option ? "checked" : ""} required>
+          <span>${escapeHTML(option)}</span>
+        </label>
+      `).join("");
+    }
+
+    const disabled = submitted ? "disabled" : "";
+    const modeButton = (value, label, unavailable = false) => `
+      <button type="button"
+        class="mode-button ${mode === value ? "active" : ""}"
+        data-mode="${value}" data-question="${q.id}"
+        ${disabled}
+        ${mode || unavailable ? "disabled" : ""}
+        aria-pressed="${mode === value}">
+        ${label}
+      </button>
+    `;
+
+    return `
+      <article class="question" data-question-id="${q.id}">
+        <div class="question-number">
+          Question ${escapeHTML(questionNumber)}
+          ${q.is_double ? '<span class="double">FRAGMENTS DOUBLÉS</span>' : ""}
         </div>
-        <p id="progress-text"></p>
-      </div>
+        <div class="question-text">${escapeHTML(q.question_text)}</div>
+        <div class="mode-label">Choisis ton mode — choix définitif</div>
+        <div class="mode-buttons">
+          ${modeButton("CASH", "CASH · 5")}
+          ${modeButton("CARRE", "CARRÉ · 3", isFreeText || options.length < 4)}
+          ${modeButton("DUO", "DUO · 1", isFreeText || options.length < 2)}
+        </div>
+        <div class="answer-area">${answerHTML}</div>
+        <div class="question-footer">
+          ${mode ? `Mode verrouillé : ${mode}` : "Aucune proposition n'est visible avant ton choix."}
+          ${q.is_double ? " · Cette question rapporte le double." : ""}
+        </div>
+      </article>
+    `;
+  }).join("");
 
-      <form id="quiz-form">
-        <div id="questions-container"></div>
-        <button class="primary" id="submit-button" type="submit">
-          Sceller mes réponses
-        </button>
-      </form>
+  updateProgress();
+}
 
-      <div id="quiz-message" class="message hidden" role="status"></div>
-    </section>
+async function chooseMode(questionId, mode) {
+  if (modes[questionId] || submitted) return;
 
-    <section id="results" class="hidden">
-      <div class="result-card score">
-        <div class="symbol">✦</div>
-        <h2>Épreuve accomplie</h2>
-        <div id="score-number" class="score-number">0</div>
-        <p>Fragments d'archive obtenus</p>
-        <p id="result-pseudo"></p>
-      </div>
+  const question = currentQuestions.find(q => Number(q.id) === Number(questionId));
+  if (!question) return;
 
-      <div class="panel">
-        <h2>Le registre des réponses</h2>
-        <p>Voici les réponses attendues et les explications du Gardien.</p>
-        <div id="corrections-container"></div>
-      </div>
-    </section>
+  const options = getOptions(question);
 
-    <footer>
-      Les Archives de Scylla · Les secrets n'appartiennent qu'à ceux
-      qui osent les découvrir.
-    </footer>
-  </div>
+  if (mode === "CARRE" && (question.question_type === "free_text" || options.length < 4)) {
+    message(quizMessage, "Cette question ne permet pas le mode CARRÉ.", "error");
+    return;
+  }
 
-  <script>
-    const API_URL = "/.netlify/functions/quiz";
+  if (mode === "DUO" && (question.question_type === "free_text" || options.length < 2)) {
+    message(quizMessage, "Cette question ne permet pas le mode DUO.", "error");
+    return;
+  }
 
-    const setup = document.getElementById("setup");
-    const quizSection = document.getElementById("quiz-section");
-    const results = document.getElementById("results");
+  clearMessage(quizMessage);
+  const card = document.querySelector(`[data-question-id="${questionId}"]`);
+  card.querySelectorAll("button[data-mode]").forEach(button => button.disabled = true);
 
-    const loadForm = document.getElementById("load-form");
-    const quizForm = document.getElementById("quiz-form");
-
-    const loadButton = document.getElementById("load-button");
-    const submitButton = document.getElementById("submit-button");
-
-    const setupMessage = document.getElementById("setup-message");
-    const quizMessage = document.getElementById("quiz-message");
-
-    const questionsContainer = document.getElementById("questions-container");
-    const correctionsContainer = document.getElementById("corrections-container");
-
-    let currentChapter = null;
-    let currentQuestions = [];
-    let selectedAnswers = {};
-    let playerPseudo = "";
-    let alreadySubmitted = false;
-
-    function escapeHTML(value) {
-      return String(value ?? "").replace(/[&<>"']/g, character => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;"
-      })[character]);
-    }
-
-    function showMessage(element, message, type = "") {
-      element.textContent = message;
-      element.className = "message";
-      if (type) element.classList.add(type);
-    }
-
-    function hideMessage(element) {
-      element.textContent = "";
-      element.className = "message hidden";
-    }
-
-    async function callAPI(payload) {
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(
-          data.error || data.message || "Le serveur a refusé la demande."
-        );
-      }
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      return data;
-    }
-
-    function getOptions(question) {
-      if (Array.isArray(question.options)) {
-        return question.options.map(option => {
-          if (typeof option === "string" || typeof option === "number") {
-            return String(option);
-          }
-          if (option && typeof option === "object") {
-            return String(option.text ?? option.label ?? "");
-          }
-          return "";
-        }).filter(Boolean);
-      }
-
-      return [];
-    }
-
-    function getMode(question) {
-      return selectedAnswers[question.id]?.mode || "CARRE";
-    }
-
-    function getAnswer(question) {
-      return selectedAnswers[question.id]?.answer ?? "";
-    }
-
-    function setAnswer(questionId, mode, answer) {
-      selectedAnswers[questionId] = { mode, answer };
-      updateProgress();
-    }
-
-    function updateProgress() {
-      const total = currentQuestions.length;
-      let answered = 0;
-
-      for (const question of currentQuestions) {
-        const answer = getAnswer(question).trim();
-        if (answer !== "") answered++;
-      }
-
-      const percent = total ? (answered / total) * 100 : 0;
-      document.getElementById("progress-bar").style.width = percent + "%";
-      document.getElementById("progress-text").textContent =
-        `${answered} réponse(s) renseignée(s) sur ${total}`;
-    }
-
-    function renderQuestions() {
-      questionsContainer.innerHTML = currentQuestions.map((question, index) => {
-        const number = question.question_number ?? index + 1;
-        const options = getOptions(question);
-        const isFreeText = question.question_type === "free_text";
-        const mode = getMode(question);
-        const answer = getAnswer(question);
-
-        let answerHTML = "";
-
-        if (mode === "CASH" || isFreeText) {
-          answerHTML = `
-            <label for="answer-${question.id}">Ta réponse</label>
-            <input
-              class="answer-input"
-              type="text"
-              id="answer-${question.id}"
-              data-answer-for="${question.id}"
-              value="${escapeHTML(answer)}"
-              maxlength="500"
-              placeholder="Écris ta réponse..."
-              autocomplete="off"
-            >
-          `;
-        } else if (options.length > 0) {
-          answerHTML = options.map(option => `
-            <label class="choice">
-              <input
-                type="radio"
-                name="answer-${question.id}"
-                value="${escapeHTML(option)}"
-                ${answer === option ? "checked" : ""}
-              >
-              <span>${escapeHTML(option)}</span>
-            </label>
-          `).join("");
-        } else {
-          answerHTML = `
-            <label for="answer-${question.id}">Ta réponse</label>
-            <input
-              class="answer-input"
-              type="text"
-              id="answer-${question.id}"
-              data-answer-for="${question.id}"
-              value="${escapeHTML(answer)}"
-              maxlength="500"
-              placeholder="Écris ta réponse..."
-            >
-          `;
-        }
-
-        return `
-          <article class="question" data-question-id="${question.id}">
-            <div class="question-number">
-              Question ${escapeHTML(number)}
-              ${question.is_double
-                ? '<span class="double">FRAGMENTS DOUBLÉS</span>'
-                : ""}
-            </div>
-
-            <div class="question-text">
-              ${escapeHTML(question.question_text)}
-            </div>
-
-            <div class="mode-label">Choisis ton mode</div>
-
-            <div class="mode-buttons">
-              ${[
-                ["CASH", "CASH · 5"],
-                ["CARRE", "CARRÉ · 3"],
-                ["DUO", "DUO · 1"]
-              ].map(([value, label]) => `
-                <button
-                  type="button"
-                  class="mode-button ${mode === value ? "active" : ""}"
-                  data-mode="${value}"
-                  data-question="${question.id}"
-                  aria-pressed="${mode === value}"
-                >${label}</button>
-              `).join("")}
-            </div>
-
-            <div class="answer-area">
-              ${answerHTML}
-            </div>
-
-            <div class="question-footer">
-              ${question.is_double
-                ? "Cette question rapporte le double des fragments."
-                : "Une mauvaise réponse ne rapporte aucun fragment."}
-            </div>
-          </article>
-        `;
-      }).join("");
-
-      updateProgress();
-    }
-
-    function readAnswersFromPage() {
-      for (const question of currentQuestions) {
-        const mode = getMode(question);
-        const isFreeText = question.question_type === "free_text";
-
-        if (mode === "CASH" || isFreeText || getOptions(question).length === 0) {
-          const input = document.querySelector(
-            `[data-answer-for="${question.id}"]`
-          );
-          setAnswer(question.id, mode, input ? input.value.trim() : "");
-        } else {
-          const checked = document.querySelector(
-            `input[name="answer-${question.id}"]:checked`
-          );
-          setAnswer(question.id, mode, checked ? checked.value : "");
-        }
-      }
-    }
-
-    loadForm.addEventListener("submit", async event => {
-      event.preventDefault();
-      hideMessage(setupMessage);
-
-      playerPseudo = document.getElementById("pseudo").value.trim();
-      const chapterId = Number(document.getElementById("chapter-id").value);
-
-      if (!playerPseudo || !Number.isInteger(chapterId) || chapterId < 1) {
-        showMessage(
-          setupMessage,
-          "Vérifie ton pseudo Discord et l'identifiant du chapitre.",
-          "error"
-        );
-        return;
-      }
-
-      loadButton.disabled = true;
-      loadButton.textContent = "Ouverture des Archives...";
-
-      try {
-        const data = await callAPI({
-          action: "questions",
-          chapterId
-        });
-
-        if (!data.chapter || !Array.isArray(data.questions)) {
-          throw new Error("Le serveur n'a pas renvoyé un chapitre valide.");
-        }
-
-        if (data.questions.length === 0) {
-          throw new Error("Ce chapitre ne contient aucune question.");
-        }
-
-        currentChapter = data.chapter;
-        currentQuestions = data.questions;
-        selectedAnswers = {};
-        alreadySubmitted = false;
-
-        for (const question of currentQuestions) {
-          selectedAnswers[question.id] = {
-            mode: "CARRE",
-            answer: ""
-          };
-        }
-
-        document.getElementById("chapter-title").textContent =
-          currentChapter.title || "Chapitre des Archives";
-
-        document.getElementById("chapter-meta").textContent =
-          `Volume ${currentChapter.volume_number} · Chapitre ${currentChapter.chapter_number}`;
-
-        setup.classList.add("hidden");
-        results.classList.add("hidden");
-        quizSection.classList.remove("hidden");
-
-        renderQuestions();
-        window.scrollTo({ top: 0, behavior: "smooth" });
-
-      } catch (error) {
-        showMessage(
-          setupMessage,
-          error.message || "Impossible de charger ce chapitre.",
-          "error"
-        );
-      } finally {
-        loadButton.disabled = false;
-        loadButton.textContent = "Ouvrir le chapitre";
-      }
+  try {
+    const data = await callAPI({
+      action: "chooseMode",
+      chapterId: currentChapter.id,
+      attemptId,
+      questionId,
+      mode
     });
 
-    questionsContainer.addEventListener("click", event => {
-      const button = event.target.closest("[data-mode]");
-      if (!button || alreadySubmitted) return;
+    modes[questionId] = data.mode;
+    question.displayedOptions = data.options || [];
+    answers[questionId] = "";
+    renderQuestions();
+  } catch (error) {
+    card.querySelectorAll("button[data-mode]").forEach(button => button.disabled = false);
+    message(quizMessage, error.message, "error");
+  }
+}
 
-      readAnswersFromPage();
+loadForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  clearMessage(setupMessage);
 
-      const questionId = Number(button.dataset.question);
-      const mode = button.dataset.mode;
+  playerPseudo = document.getElementById("pseudo").value.trim();
+  const chapterId = Number(document.getElementById("chapter-id").value);
 
-      const question = currentQuestions.find(q => q.id === questionId);
-      if (!question) return;
+  if (!playerPseudo || !Number.isSafeInteger(chapterId) || chapterId < 1) {
+    message(setupMessage, "Vérifie ton pseudo et l'identifiant du chapitre.", "error");
+    return;
+  }
 
-      const previousAnswer = getAnswer(question);
+  loadButton.disabled = true;
+  loadButton.textContent = "Ouverture des Archives...";
 
-      setAnswer(
-        questionId,
-        mode,
-        question.question_type === "free_text" || mode === "CASH"
-          ? previousAnswer
-          : ""
-      );
+  try {
+    const data = await callAPI({ action: "start", chapterId, pseudo: playerPseudo });
 
-      renderQuestions();
+    currentChapter = data.chapter;
+    currentQuestions = data.questions;
+    attemptId = data.attemptId;
+    modes = {};
+    answers = {};
+    submitted = false;
+
+    currentQuestions.forEach(q => {
+      answers[q.id] = "";
     });
 
-    questionsContainer.addEventListener("input", event => {
-      if (alreadySubmitted) return;
-      const input = event.target.closest("[data-answer-for]");
-      if (!input) return;
+    document.getElementById("chapter-title").textContent = currentChapter.title;
+    document.getElementById("chapter-meta").textContent =
+      `Volume ${currentChapter.volume_number} · Chapitre ${currentChapter.chapter_number}`;
 
-      const questionId = Number(input.dataset.answerFor);
-      const question = currentQuestions.find(q => q.id === questionId);
-      if (!question) return;
+    setup.classList.add("hidden");
+    results.classList.add("hidden");
+    quizSection.classList.remove("hidden");
+    renderQuestions();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (error) {
+    message(setupMessage, error.message, "error");
+  } finally {
+    loadButton.disabled = false;
+    loadButton.textContent = "Ouvrir le chapitre";
+  }
+});
 
-      setAnswer(questionId, getMode(question), input.value);
+questionsContainer.addEventListener("click", event => {
+  const button = event.target.closest("button[data-mode]");
+  if (button && !button.disabled) {
+    chooseMode(Number(button.dataset.question), button.dataset.mode);
+  }
+});
+
+questionsContainer.addEventListener("input", event => {
+  const input = event.target.closest("[data-answer-for]");
+  if (!input || submitted) return;
+  answers[input.dataset.answerFor] = input.value;
+  updateProgress();
+});
+
+questionsContainer.addEventListener("change", event => {
+  const input = event.target;
+  if (!(input instanceof HTMLInputElement) || input.type !== "radio" || submitted) return;
+  const match = input.name.match(/^answer-(\d+)$/);
+  if (!match) return;
+  answers[match[1]] = input.value;
+  updateProgress();
+});
+
+function renderCorrections(corrections) {
+  if (!Array.isArray(corrections) || !corrections.length) {
+    correctionsContainer.textContent = "Aucune correction n'a été renvoyée.";
+    return;
+  }
+
+  correctionsContainer.innerHTML = corrections.map(item => `
+    <div class="correction">
+      <h3>Question ${escapeHTML(item.questionNumber)} — ${escapeHTML(item.question)}</h3>
+      <p><strong>Ta réponse :</strong> ${escapeHTML(item.yourAnswer)}</p>
+      <p><strong>Réponse attendue :</strong> ${escapeHTML(item.correctAnswer)}</p>
+      <p class="${item.correct ? "correct" : "incorrect"}">
+        ${item.correct ? "✓ Bonne réponse" : "✗ Réponse incorrecte"}
+        · ${escapeHTML(item.fragments)} fragment(s)
+      </p>
+      ${item.explanation ? `<p class="explanation">${escapeHTML(item.explanation)}</p>` : ""}
+    </div>
+  `).join("");
+}
+
+quizForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  clearMessage(quizMessage);
+
+  if (submitted) return;
+
+  const missingMode = currentQuestions.find(q => !modes[q.id]);
+  if (missingMode) {
+    message(quizMessage, "Choisis un mode pour chaque question avant de valider.", "error");
+    document.querySelector(`[data-question-id="${missingMode.id}"]`)
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+
+  const missingAnswer = currentQuestions.find(q => !String(answers[q.id] || "").trim());
+  if (missingAnswer) {
+    message(quizMessage, "Il reste des questions sans réponse.", "error");
+    document.querySelector(`[data-question-id="${missingAnswer.id}"]`)
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+
+  if (!window.confirm("Es-tu certain de vouloir sceller tes réponses ? Cette action est définitive.")) {
+    return;
+  }
+
+  submitButton.disabled = true;
+  submitButton.textContent = "Scellement en cours...";
+
+  try {
+    const answerList = currentQuestions.map(q => ({
+      questionId: q.id,
+      mode: modes[q.id],
+      answer: String(answers[q.id] || "").trim()
+    }));
+
+    const data = await callAPI({
+      action: "submit",
+      chapterId: currentChapter.id,
+      attemptId,
+      answers: answerList
     });
 
-    questionsContainer.addEventListener("change", event => {
-      if (alreadySubmitted) return;
+    submitted = true;
+    document.getElementById("score-number").textContent = data.totalFragments;
+    document.getElementById("result-pseudo").textContent =
+      `Épreuve scellée par ${playerPseudo}`;
 
-      const input = event.target;
-      if (!(input instanceof HTMLInputElement) || input.type !== "radio") {
-        return;
-      }
+    renderCorrections(data.corrections);
+    quizSection.classList.add("hidden");
+    results.classList.remove("hidden");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (error) {
+    message(quizMessage, error.message, "error");
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = "Sceller mes réponses";
+  }
+});
 
-      const match = input.name.match(/^answer-(\d+)$/);
-      if (!match) return;
-
-      const questionId = Number(match[1]);
-      const question = currentQuestions.find(q => q.id === questionId);
-      if (!question) return;
-
-      setAnswer(questionId, getMode(question), input.value);
-    });
-
-    function renderCorrections(corrections) {
-      if (!Array.isArray(corrections) || corrections.length === 0) {
-        correctionsContainer.textContent =
-          "Le score a été enregistré, mais aucune correction n'a été renvoyée.";
-        return;
-      }
-
-      correctionsContainer.innerHTML = corrections.map((item, index) => {
-        const questionText = item.questionText ??
-          item.question_text ??
-          `Question ${index + 1}`;
-
-        const userAnswer = item.userAnswer ??
-          item.answer ??
-          item.answer_text ??
-          "Aucune réponse";
-
-        const correctAnswer = item.correctAnswer ??
-          item.correct_answer_display ??
-          item.correctAnswerDisplay ??
-          "Réponse non précisée";
-
-        const explanation = item.explanation ?? "";
-
-        const isCorrect = item.isCorrect ?? item.is_correct;
-
-        return `
-          <div class="correction">
-            <h3>${escapeHTML(questionText)}</h3>
-            <p>
-              <strong>Ta réponse :</strong>
-              ${escapeHTML(userAnswer)}
-            </p>
-            <p>
-              <strong>Réponse attendue :</strong>
-              ${escapeHTML(correctAnswer)}
-            </p>
-            ${isCorrect === undefined ? "" : `
-              <p class="${isCorrect ? "correct" : "incorrect"}">
-                ${isCorrect ? "✓ Bonne réponse" : "✗ Réponse incorrecte"}
-              </p>
-            `}
-            ${explanation ? `
-              <p class="explanation">${escapeHTML(explanation)}</p>
-            ` : ""}
-          </div>
-        `;
-      }).join("");
-    }
-
-    quizForm.addEventListener("submit", async event => {
-      event.preventDefault();
-      hideMessage(quizMessage);
-
-      if (alreadySubmitted) return;
-
-      readAnswersFromPage();
-
-      const missing = currentQuestions.filter(question =>
-        !getAnswer(question).trim()
-      );
-
-      if (missing.length > 0) {
-        showMessage(
-          quizMessage,
-          `Il reste ${missing.length} question(s) sans réponse. Complète-les avant de sceller ton épreuve.`,
-          "error"
-        );
-
-        const firstMissing = document.querySelector(
-          `[data-question-id="${missing[0].id}"]`
-        );
-
-        firstMissing?.scrollIntoView({
-          behavior: "smooth",
-          block: "center"
-        });
-
-        return;
-      }
-
-      const answers = currentQuestions.map(question => ({
-        questionId: question.id,
-        mode: getMode(question),
-        answer: getAnswer(question).trim()
-      }));
-
-      const confirmed = window.confirm(
-        "Es-tu certain de vouloir sceller tes réponses ? Cette action enverra définitivement ton épreuve."
-      );
-
-      if (!confirmed) return;
-
-      submitButton.disabled = true;
-      submitButton.textContent = "Scellement en cours...";
-
-      try {
-        const data = await callAPI({
-          action: "submit",
-          chapterId: currentChapter.id,
-          pseudo: playerPseudo,
-          answers
-        });
-
-        alreadySubmitted = true;
-
-        const total = Number(data.totalFragments ?? 0);
-
-        document.getElementById("score-number").textContent =
-          `${total}`;
-
-        document.getElementById("result-pseudo").textContent =
-          `Épreuve scellée par ${playerPseudo}`;
-
-        renderCorrections(data.corrections);
-
-        quizSection.classList.add("hidden");
-        results.classList.remove("hidden");
-
-        window.scrollTo({ top: 0, behavior: "smooth" });
-
-      } catch (error) {
-        showMessage(
-          quizMessage,
-          error.message ||
-            "L'envoi a échoué. Tes réponses sont encore affichées : tu peux réessayer.",
-          "error"
-        );
-      } finally {
-        submitButton.disabled = false;
-        submitButton.textContent = "Sceller mes réponses";
-      }
-    });
-
-    // Permet d'ouvrir directement un chapitre avec ?chapter=1
-    const params = new URLSearchParams(window.location.search);
-    const chapterFromUrl = params.get("chapter");
-
-    if (chapterFromUrl && /^\d+$/.test(chapterFromUrl)) {
-      document.getElementById("chapter-id").value = chapterFromUrl;
-    }
-  </script>
+const params = new URLSearchParams(window.location.search);
+const chapterFromUrl = params.get("chapter");
+if (chapterFromUrl && /^\d+$/.test(chapterFromUrl)) {
+  document.getElementById("chapter-id").value = chapterFromUrl;
+}
+</script>
 </body>
 </html>
