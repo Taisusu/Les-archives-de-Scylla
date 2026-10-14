@@ -1,0 +1,188 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Les Épreuves — Archives de Scylla</title>
+<style>
+:root{--bg:#080e20;--panel:#121d36;--gold:#d8b66b;--text:#f1e5c9;--muted:#b4b5c5}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#1c2948,var(--bg) 65%);color:var(--text);font-family:Georgia,serif;min-height:100vh;padding:24px}
+main{max-width:760px;margin:35px auto}
+header{text-align:center;margin-bottom:30px}
+header a{color:var(--gold);text-decoration:none}
+.eyebrow{color:var(--gold);text-transform:uppercase;letter-spacing:3px;font-size:12px}
+h1{font-weight:normal;font-size:clamp(30px,6vw,44px);margin:18px 0}
+.card{background:#121d36e8;border:1px solid #d8b66b55;padding:clamp(20px,5vw,36px);border-radius:8px}
+.progress{height:5px;background:#ffffff18;margin:20px 0 28px}
+#bar{height:100%;width:0;background:var(--gold);transition:width .2s}
+button,input{font:inherit}
+button{cursor:pointer}
+.modes,.options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0}
+.options{grid-template-columns:repeat(2,minmax(0,1fr))}
+button.choice{background:#172541;border:1px solid #d8b66b66;color:var(--text);padding:14px 8px;border-radius:5px}
+button.choice:hover,button.choice.selected{border-color:var(--gold);background:#293650}
+button.primary{background:var(--gold);color:#101629;border:1px solid var(--gold);padding:14px 20px;font-weight:bold;border-radius:4px}
+button:disabled{opacity:.45;cursor:not-allowed}
+input{width:100%;padding:14px;background:#080e20;color:var(--text);border:1px solid #d8b66b66;border-radius:4px}
+label{display:block;margin:20px 0 8px}
+.muted{color:var(--muted);line-height:1.7}
+.row{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.notice{color:var(--gold);font-size:14px;line-height:1.6}
+.review{border-top:1px solid #d8b66b44;padding:18px 0}
+.correct{color:#a9d8a6}.wrong{color:#f0a4a4}
+.hidden{display:none}
+@media(max-width:480px){body{padding:12px}.modes{gap:5px}.choice{font-size:14px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <p class="eyebrow">Le savoir · Le mystère · La légende</p>
+  <h1>Les Archives de Scylla</h1>
+  <p class="muted">Épreuve de démonstration</p>
+  <a href="index.html">← Retour à la Bibliothèque</a>
+</header>
+
+<section class="card" id="game">
+  <div class="row">
+    <span class="eyebrow" id="counter">Épreuve 1 / 3</span>
+    <span id="score">0 Fragment</span>
+  </div>
+  <div class="progress"><div id="bar"></div></div>
+  <p class="notice" id="doubleNote"></p>
+  <h2 id="question"></h2>
+  <p class="muted" id="instruction">Choisis ton mode de réponse.</p>
+  <div class="modes" id="modes">
+    <button class="choice" data-mode="CASH">💰 CASH<br>5 Fragments</button>
+    <button class="choice" data-mode="CARRE">🟦 CARRÉ<br>3 Fragments</button>
+    <button class="choice" data-mode="DUO">🟨 DUO<br>1 Fragment</button>
+  </div>
+  <div id="answerArea"></div>
+  <div class="row" style="margin-top:22px">
+    <span class="muted" id="feedback" aria-live="polite"></span>
+    <button class="primary" id="submit" disabled>Valider</button>
+  </div>
+</section>
+
+<section class="card hidden" id="results">
+  <p class="eyebrow">Le manuscrit est refermé</p>
+  <h2>Ton résultat</h2>
+  <p id="finalScore"></p>
+  <p class="muted">Voici la correction de cette démonstration.</p>
+  <div id="review"></div>
+  <button class="primary" onclick="location.reload()">Recommencer</button>
+  <p class="notice">Démonstration uniquement : aucun résultat n'est enregistré.</p>
+</section>
+</main>
+
+<script>
+const questions = [
+  {
+    text:"Quelle planète est surnommée la planète rouge ?",
+    answer:"mars",
+    display:"Mars",
+    explanation:"Mars paraît rouge en raison des oxydes de fer présents à sa surface.",
+    options:["Vénus","Mars","Jupiter","Mercure"],
+    duo:["Mars","Jupiter"]
+  },
+  {
+    text:"Combien de côtés possède un hexagone ?",
+    answer:"6",
+    display:"Six côtés",
+    explanation:"Un hexagone est un polygone à six côtés.",
+    options:["5","6","7","8"],
+    duo:["6","8"]
+  },
+  {
+    text:"Quel est le plus grand océan de la Terre ?",
+    answer:"pacifique",
+    display:"L'océan Pacifique",
+    explanation:"Le Pacifique est le plus vaste océan de la planète.",
+    options:["Atlantique","Indien","Pacifique","Arctique"],
+    duo:["Pacifique","Atlantique"],
+    doubled:true
+  }
+];
+
+let index=0, mode=null, response="", fragments=0, history=[];
+const $=id=>document.getElementById(id);
+
+function render(){
+  const q=questions[index];
+  mode=null;response="";
+  $("counter").textContent=`Épreuve ${index+1} / ${questions.length}`;
+  $("score").textContent=`${fragments} Fragment${fragments>1?"s":""}`;
+  $("bar").style.width=`${index/questions.length*100}%`;
+  $("question").textContent=q.text;
+  $("doubleNote").textContent=q.doubled?"✦ Valeur doublée dans cette démonstration.":"";
+  $("instruction").textContent="Choisis ton mode de réponse.";
+  $("feedback").textContent="";
+  $("answerArea").innerHTML="";
+  $("submit").disabled=true;
+  $("submit").textContent=index===questions.length-1?"Terminer l'épreuve":"Question suivante";
+  document.querySelectorAll("[data-mode]").forEach(b=>b.classList.remove("selected"));
+}
+function chooseMode(selected){
+  mode=selected;response="";
+  document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("selected",b.dataset.mode===mode));
+  const q=questions[index], area=$("answerArea");
+  area.innerHTML="";
+  $("instruction").textContent=mode==="CASH"?"Écris ta réponse.":mode==="CARRE"?"Choisis parmi quatre propositions.":"Choisis parmi deux propositions.";
+  if(mode==="CASH"){
+    const label=document.createElement("label");label.textContent="Ta réponse";
+    const input=document.createElement("input");input.placeholder="Écris ici…";
+    input.addEventListener("input",()=>{response=input.value;$("submit").disabled=!response.trim()});
+    area.append(label,input);input.focus();
+  }else{
+    const choices=mode==="CARRE"?q.options:q.duo;
+    const wrap=document.createElement("div");wrap.className="options";
+    choices.forEach(option=>{
+      const button=document.createElement("button");button.className="choice";button.textContent=option;
+      button.onclick=()=>{
+        response=option;
+        wrap.querySelectorAll("button").forEach(b=>b.classList.remove("selected"));
+        button.classList.add("selected");$("submit").disabled=false;
+      };
+      wrap.append(button);
+    });
+    area.append(wrap);
+  }
+  $("submit").disabled=true;
+}
+function normalize(value){
+  return value.trim().toLocaleLowerCase("fr").normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+}
+function submit(){
+  if(!mode||!response.trim())return;
+  const q=questions[index];
+  const correct=normalize(response)===normalize(q.answer);
+  const base={CASH:5,CARRE:3,DUO:1}[mode];
+  const earned=correct?base*(q.doubled?2:1):0;
+  fragments+=earned;
+  history.push({q,mode,response,correct,earned});
+  if(index<questions.length-1){index++;render();}
+  else showResults();
+}
+function showResults(){
+  $("game").classList.add("hidden");
+  $("results").classList.remove("hidden");
+  $("finalScore").textContent=`Tu as obtenu ${fragments} Fragment${fragments>1?"s":""} de Savoir.`;
+  $("review").innerHTML="";
+  history.forEach((item,i)=>{
+    const article=document.createElement("article");article.className="review";
+    const title=document.createElement("h3");title.textContent=`${i+1}. ${item.q.text}`;
+    const result=document.createElement("p");result.className=item.correct?"correct":"wrong";
+    result.textContent=`Ta réponse : ${item.response} — ${item.correct?"Bonne réponse !":"Réponse incorrecte."} (${item.earned} Fragment${item.earned>1?"s":""})`;
+    const answer=document.createElement("p");answer.textContent=`Bonne réponse : ${item.q.display}`;
+    const explanation=document.createElement("p");explanation.className="muted";explanation.textContent=item.q.explanation;
+    article.append(title,result,answer,explanation);$("review").append(article);
+  });
+}
+document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>chooseMode(b.dataset.mode)));
+$("submit").addEventListener("click",submit);
+render();
+</script>
+</body>
+</html>
