@@ -18,14 +18,11 @@
     }
 
     * { box-sizing: border-box; }
-
     html { scroll-behavior: smooth; }
 
     body {
       margin: 0;
-      background:
-        radial-gradient(ellipse at 50% 20%, #1c2948 0%, transparent 55%),
-        var(--night);
+      background: radial-gradient(ellipse at 50% 20%, #1c2948 0%, transparent 55%), var(--night);
       color: var(--pale);
       font-family: Georgia, "Times New Roman", serif;
       min-height: 100vh;
@@ -47,15 +44,8 @@
       text-transform: uppercase;
     }
 
-    .nav-note {
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    main {
-      width: min(1000px, 90%);
-      margin: auto;
-    }
+    .nav-note { color: var(--muted); font-size: 13px; }
+    main { width: min(1000px, 90%); margin: auto; }
 
     .hero {
       min-height: 72vh;
@@ -76,8 +66,7 @@
       place-items: center;
       font-size: 53px;
       color: var(--gold);
-      box-shadow: 0 0 45px #d8b66b18,
-                  inset 0 0 25px #d8b66b12;
+      box-shadow: 0 0 45px #d8b66b18, inset 0 0 25px #d8b66b12;
       margin-bottom: 30px;
     }
 
@@ -97,17 +86,8 @@
       text-shadow: 0 0 35px #d8b66b18;
     }
 
-    h1 span {
-      display: block;
-      color: var(--gold);
-      font-style: italic;
-    }
-
-    .ornament {
-      color: var(--gold);
-      letter-spacing: 8px;
-      margin: 28px 0;
-    }
+    h1 span { display: block; color: var(--gold); font-style: italic; }
+    .ornament { color: var(--gold); letter-spacing: 8px; margin: 28px 0; }
 
     .intro {
       max-width: 620px;
@@ -129,12 +109,11 @@
       font-weight: bold;
       border: 1px solid var(--gold);
       transition: .2s;
+      cursor: pointer;
+      font-family: inherit;
     }
 
-    .button:hover {
-      background: transparent;
-      color: var(--gold);
-    }
+    .button:hover { background: transparent; color: var(--gold); }
 
     .section {
       border-top: 1px solid #d8b66b40;
@@ -142,13 +121,9 @@
       text-align: center;
     }
 
-    h2 {
-      color: var(--gold);
-      font-size: 27px;
-      font-weight: normal;
-    }
+    h2 { color: var(--gold); font-size: 27px; font-weight: normal; }
 
-    .section p {
+    .section > p {
       max-width: 620px;
       margin: 15px auto;
       color: var(--muted);
@@ -168,17 +143,9 @@
       padding: 24px 15px;
     }
 
-    .card .symbol {
-      font-size: 28px;
-      color: var(--gold);
-    }
-
-    .card h3 {
-      font-weight: normal;
-      color: var(--pale);
-    }
-
-    .card p { font-size: 14px; }
+    .card .symbol { font-size: 28px; color: var(--gold); }
+    .card h3 { font-weight: normal; color: var(--pale); }
+    .card p { font-size: 14px; color: var(--muted); line-height: 1.7; }
 
     .coming {
       display: inline-block;
@@ -189,6 +156,35 @@
       letter-spacing: 2px;
       margin-top: 12px;
     }
+
+    .chapter-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 24px;
+      text-align: left;
+    }
+
+    .chapter {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 18px;
+      border: 1px solid #d8b66b45;
+      background: #080e2066;
+    }
+
+    .chapter h4 {
+      margin: 0 0 7px;
+      font-size: 17px;
+      font-weight: normal;
+      color: var(--gold);
+    }
+
+    .chapter small { color: var(--muted); }
+    .chapter .button { margin: 0; white-space: nowrap; padding: 12px 16px; }
+    .status { color: var(--muted); line-height: 1.8; }
+    .error { color: #f0a6a6; }
 
     footer {
       border-top: 1px solid #d8b66b35;
@@ -201,14 +197,20 @@
 
     footer span { color: var(--gold); }
 
+    @media (max-width: 700px) {
+      .cards { grid-template-columns: 1fr; }
+      .chapter { align-items: flex-start; flex-direction: column; }
+      .chapter .button { align-self: flex-start; }
+    }
+
     @media (max-width: 600px) {
       nav { padding: 18px 5%; }
       .brand { font-size: 12px; letter-spacing: 1px; }
       .nav-note { font-size: 11px; }
       .hero { min-height: auto; padding: 75px 5px; }
       .intro { font-size: 15px; }
-      .cards { grid-template-columns: 1fr; }
       .card { padding: 18px; }
+      .eyebrow { letter-spacing: 3px; }
     }
   </style>
 </head>
@@ -224,10 +226,7 @@
       <div class="seal" aria-hidden="true">✧</div>
       <div class="eyebrow">Le savoir · Le mystère · La légende</div>
 
-      <h1>
-        Les Archives
-        <span>de Scylla</span>
-      </h1>
+      <h1>Les Archives <span>de Scylla</span></h1>
 
       <div class="ornament">━━━━ ✦ ━━━━</div>
 
@@ -239,17 +238,14 @@
         et chaque Archiviste peut inscrire son nom dans la légende.
       </p>
 
-      <a class="button" href="#bibliotheque">
-        Entrer dans la Bibliothèque
-      </a>
+      <a class="button" href="#bibliotheque">Entrer dans la Bibliothèque</a>
     </section>
 
     <section class="section" id="bibliotheque">
       <div class="eyebrow">Les portes vous attendent</div>
       <h2>La Bibliothèque de Scylla</h2>
       <p>
-        Les Archives s'agrandissent. Explorez les univers,
-        relevez les défis et récoltez les Fragments de Savoir.
+        Explorez les univers, relevez les défis et récoltez les Fragments de Savoir.
         Votre prochaine Épreuve commence ici.
       </p>
 
@@ -258,7 +254,8 @@
           <div class="symbol">📜</div>
           <h3>Les Chapitres</h3>
           <p>Des Épreuves de culture, de mémoire et d'observation.</p>
-          <span class="coming">BIENTÔT DISPONIBLE</span>
+          <div id="chapter-status" class="status" aria-live="polite">Consultation des Archives…</div>
+          <div id="chapter-list" class="chapter-list"></div>
         </article>
 
         <article class="card">
@@ -291,5 +288,65 @@
     <span>LES ARCHIVES DE SCYLLA</span><br>
     La Bibliothèque n'a pas encore révélé tous ses secrets.
   </footer>
+
+  <script>
+    const statusElement = document.getElementById("chapter-status");
+    const listElement = document.getElementById("chapter-list");
+
+    async function loadChapters() {
+      try {
+        const response = await fetch("/.netlify/functions/quiz", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "listChapters" })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Impossible de consulter les Archives.");
+        }
+
+        const chapters = Array.isArray(data.chapters) ? data.chapters : [];
+        listElement.replaceChildren();
+
+        if (chapters.length === 0) {
+          statusElement.textContent = "Aucun Chapitre n'est actuellement ouvert.";
+          return;
+        }
+
+        statusElement.textContent = `${chapters.length} Chapitre(s) accessible(s)`;
+
+        chapters.forEach((chapter) => {
+          const item = document.createElement("div");
+          item.className = "chapter";
+
+          const details = document.createElement("div");
+          const title = document.createElement("h4");
+          title.textContent = `Volume ${chapter.volume_number} · Chapitre ${chapter.chapter_number}`;
+
+          const subtitle = document.createElement("small");
+          subtitle.textContent = chapter.title;
+
+          details.append(title, subtitle);
+
+          const link = document.createElement("a");
+          link.className = "button";
+          link.textContent = "Participer";
+          link.href = `quiz.html?chapterId=${encodeURIComponent(chapter.id)}`;
+
+          item.append(details, link);
+          listElement.append(item);
+        });
+      } catch (error) {
+        statusElement.textContent =
+          "Les Archives sont momentanément inaccessibles. Réessaie dans quelques instants.";
+        statusElement.classList.add("error");
+        console.error("Chargement des Chapitres :", error);
+      }
+    }
+
+    loadChapters();
+  </script>
 </body>
 </html>
