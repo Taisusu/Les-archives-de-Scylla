@@ -54,10 +54,10 @@ label{display:block;margin:20px 0 8px}
   <p class="notice" id="doubleNote"></p>
   <h2 id="question"></h2>
   <p class="muted" id="instruction">Choisis ton mode de réponse.</p>
-  <div class="modes" id="modes">
-    <button class="choice" data-mode="CASH">💰 CASH<br>5 Fragments</button>
-    <button class="choice" data-mode="CARRE">🟦 CARRÉ<br>3 Fragments</button>
-    <button class="choice" data-mode="DUO">🟨 DUO<br>1 Fragment</button>
+  <div class="modes">
+    <button class="choice" data-mode="CASH"></button>
+    <button class="choice" data-mode="CARRE"></button>
+    <button class="choice" data-mode="DUO"></button>
   </div>
   <div id="answerArea"></div>
   <div class="row" style="margin-top:22px">
@@ -81,24 +81,21 @@ label{display:block;margin:20px 0 8px}
 const questions = [
   {
     text:"Quelle planète est surnommée la planète rouge ?",
-    answer:"mars",
-    display:"Mars",
+    answer:"mars", display:"Mars",
     explanation:"Mars paraît rouge en raison des oxydes de fer présents à sa surface.",
     options:["Vénus","Mars","Jupiter","Mercure"],
     duo:["Mars","Jupiter"]
   },
   {
     text:"Combien de côtés possède un hexagone ?",
-    answer:"6",
-    display:"Six côtés",
+    answer:"6", display:"Six côtés",
     explanation:"Un hexagone est un polygone à six côtés.",
     options:["5","6","7","8"],
     duo:["6","8"]
   },
   {
     text:"Quel est le plus grand océan de la Terre ?",
-    answer:"pacifique",
-    display:"L'océan Pacifique",
+    answer:"pacifique", display:"L'océan Pacifique",
     explanation:"Le Pacifique est le plus vaste océan de la planète.",
     options:["Atlantique","Indien","Pacifique","Arctique"],
     duo:["Pacifique","Atlantique"],
@@ -109,6 +106,11 @@ const questions = [
 let index=0, mode=null, response="", fragments=0, history=[];
 const $=id=>document.getElementById(id);
 
+function normalize(value){
+  return value.trim().toLocaleLowerCase("fr")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+}
+
 function render(){
   const q=questions[index];
   mode=null;response="";
@@ -116,34 +118,55 @@ function render(){
   $("score").textContent=`${fragments} Fragment${fragments>1?"s":""}`;
   $("bar").style.width=`${index/questions.length*100}%`;
   $("question").textContent=q.text;
-  $("doubleNote").textContent=q.doubled?"✦ Valeur doublée dans cette démonstration.":"";
+  $("doubleNote").textContent=q.doubled?"✦ Question à valeur doublée !":"";
   $("instruction").textContent="Choisis ton mode de réponse.";
   $("feedback").textContent="";
   $("answerArea").innerHTML="";
   $("submit").disabled=true;
-  $("submit").textContent=index===questions.length-1?"Terminer l'épreuve":"Question suivante";
-  document.querySelectorAll("[data-mode]").forEach(b=>b.classList.remove("selected"));
+  $("submit").textContent=index===questions.length-1?"Terminer l'épreuve":"Valider et continuer";
+
+  document.querySelectorAll("[data-mode]").forEach(button=>{
+    const base={CASH:5,CARRE:3,DUO:1}[button.dataset.mode];
+    const value=base*(q.doubled?2:1);
+    button.innerHTML=`${{CASH:"💰 CASH",CARRE:"🟦 CARRÉ",DUO:"🟨 DUO"}[button.dataset.mode]}<br>${value} Fragment${value>1?"s":""}`;
+    button.classList.remove("selected");
+  });
 }
+
 function chooseMode(selected){
   mode=selected;response="";
-  document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("selected",b.dataset.mode===mode));
-  const q=questions[index], area=$("answerArea");
+  document.querySelectorAll("[data-mode]").forEach(b=>{
+    b.classList.toggle("selected",b.dataset.mode===mode);
+  });
+  const q=questions[index],area=$("answerArea");
   area.innerHTML="";
   $("instruction").textContent=mode==="CASH"?"Écris ta réponse.":mode==="CARRE"?"Choisis parmi quatre propositions.":"Choisis parmi deux propositions.";
+
   if(mode==="CASH"){
-    const label=document.createElement("label");label.textContent="Ta réponse";
-    const input=document.createElement("input");input.placeholder="Écris ici…";
-    input.addEventListener("input",()=>{response=input.value;$("submit").disabled=!response.trim()});
-    area.append(label,input);input.focus();
+    const label=document.createElement("label");
+    label.textContent="Ta réponse";
+    const input=document.createElement("input");
+    input.placeholder="Écris ici…";
+    input.autocomplete="off";
+    input.addEventListener("input",()=>{
+      response=input.value;
+      $("submit").disabled=!response.trim();
+    });
+    area.append(label,input);
+    input.focus();
   }else{
     const choices=mode==="CARRE"?q.options:q.duo;
-    const wrap=document.createElement("div");wrap.className="options";
+    const wrap=document.createElement("div");
+    wrap.className="options";
     choices.forEach(option=>{
-      const button=document.createElement("button");button.className="choice";button.textContent=option;
+      const button=document.createElement("button");
+      button.className="choice";
+      button.textContent=option;
       button.onclick=()=>{
         response=option;
         wrap.querySelectorAll("button").forEach(b=>b.classList.remove("selected"));
-        button.classList.add("selected");$("submit").disabled=false;
+        button.classList.add("selected");
+        $("submit").disabled=false;
       };
       wrap.append(button);
     });
@@ -151,9 +174,7 @@ function chooseMode(selected){
   }
   $("submit").disabled=true;
 }
-function normalize(value){
-  return value.trim().toLocaleLowerCase("fr").normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-}
+
 function submit(){
   if(!mode||!response.trim())return;
   const q=questions[index];
@@ -165,22 +186,34 @@ function submit(){
   if(index<questions.length-1){index++;render();}
   else showResults();
 }
+
 function showResults(){
   $("game").classList.add("hidden");
   $("results").classList.remove("hidden");
   $("finalScore").textContent=`Tu as obtenu ${fragments} Fragment${fragments>1?"s":""} de Savoir.`;
   $("review").innerHTML="";
   history.forEach((item,i)=>{
-    const article=document.createElement("article");article.className="review";
-    const title=document.createElement("h3");title.textContent=`${i+1}. ${item.q.text}`;
-    const result=document.createElement("p");result.className=item.correct?"correct":"wrong";
+    const article=document.createElement("article");
+    article.className="review";
+    const title=document.createElement("h3");
+    title.textContent=`${i+1}. ${item.q.text}`;
+    const result=document.createElement("p");
+    result.className=item.correct?"correct":"wrong";
     result.textContent=`Ta réponse : ${item.response} — ${item.correct?"Bonne réponse !":"Réponse incorrecte."} (${item.earned} Fragment${item.earned>1?"s":""})`;
-    const answer=document.createElement("p");answer.textContent=`Bonne réponse : ${item.q.display}`;
-    const explanation=document.createElement("p");explanation.className="muted";explanation.textContent=item.q.explanation;
-    article.append(title,result,answer,explanation);$("review").append(article);
+    const answer=document.createElement("p");
+    answer.textContent=`Bonne réponse : ${item.q.display}`;
+    const explanation=document.createElement("p");
+    explanation.className="muted";
+    explanation.textContent=item.q.explanation;
+    article.append(title,result,answer,explanation);
+    $("review").append(article);
   });
+  $("bar").style.width="100%";
 }
-document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>chooseMode(b.dataset.mode)));
+
+document.querySelectorAll("[data-mode]").forEach(button=>{
+  button.addEventListener("click",()=>chooseMode(button.dataset.mode));
+});
 $("submit").addEventListener("click",submit);
 render();
 </script>
