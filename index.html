@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#080e20">
   <title>Les Archives de Scylla</title>
-  <meta name="description" content="Entrez dans les Archives de Scylla. Franchissez les Épreuves, récoltez les Fragments et inscrivez votre nom dans la légende.">
+  <meta name="description" content="Entrez dans les Archives de Scylla, explorez les Chapitres et relevez les Épreuves.">
 
   <style>
     :root {
@@ -17,15 +17,24 @@
       --muted: #b4b5c5;
     }
 
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
 
     body {
       margin: 0;
-      background: radial-gradient(ellipse at 50% 20%, #1c2948 0%, transparent 55%), var(--night);
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at 50% 20%, #1c2948 0%, transparent 55%),
+        var(--night);
       color: var(--pale);
       font-family: Georgia, "Times New Roman", serif;
-      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
     nav {
@@ -44,17 +53,25 @@
       text-transform: uppercase;
     }
 
-    .nav-note { color: var(--muted); font-size: 13px; }
-    main { width: min(1000px, 90%); margin: auto; }
+    .nav-note {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    main {
+      width: min(1000px, 90%);
+      margin: auto;
+      flex: 1;
+    }
 
     .hero {
-      min-height: 72vh;
+      min-height: 75vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 65px 15px 55px;
+      padding: 65px 15px;
     }
 
     .seal {
@@ -73,7 +90,7 @@
     .eyebrow {
       color: var(--gold);
       text-transform: uppercase;
-      letter-spacing: 5px;
+      letter-spacing: 4px;
       font-size: 12px;
       margin-bottom: 18px;
     }
@@ -86,8 +103,17 @@
       text-shadow: 0 0 35px #d8b66b18;
     }
 
-    h1 span { display: block; color: var(--gold); font-style: italic; }
-    .ornament { color: var(--gold); letter-spacing: 8px; margin: 28px 0; }
+    h1 span {
+      display: block;
+      color: var(--gold);
+      font-style: italic;
+    }
+
+    .ornament {
+      color: var(--gold);
+      letter-spacing: 8px;
+      margin: 28px 0;
+    }
 
     .intro {
       max-width: 620px;
@@ -96,32 +122,54 @@
       line-height: 1.9;
     }
 
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 22px;
+    }
+
     .button {
       display: inline-block;
-      margin-top: 25px;
-      padding: 15px 27px;
+      padding: 15px 24px;
       background: var(--gold);
       color: #11182a;
       text-decoration: none;
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 1.5px;
       font-size: 12px;
       font-weight: bold;
       border: 1px solid var(--gold);
       transition: .2s;
-      cursor: pointer;
-      font-family: inherit;
     }
 
-    .button:hover { background: transparent; color: var(--gold); }
+    .button:hover {
+      background: transparent;
+      color: var(--gold);
+    }
+
+    .button.secondary {
+      background: transparent;
+      color: var(--gold);
+    }
+
+    .button.secondary:hover {
+      background: var(--gold);
+      color: #11182a;
+    }
 
     .section {
       border-top: 1px solid #d8b66b40;
-      padding: 48px 0;
+      padding: 42px 0;
       text-align: center;
     }
 
-    h2 { color: var(--gold); font-size: 27px; font-weight: normal; }
+    h2 {
+      color: var(--gold);
+      font-size: 27px;
+      font-weight: normal;
+    }
 
     .section > p {
       max-width: 620px;
@@ -132,59 +180,37 @@
 
     .cards {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
-      margin-top: 32px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      margin-top: 30px;
     }
 
     .card {
       border: 1px solid #d8b66b45;
       background: #101b356b;
-      padding: 24px 15px;
+      padding: 28px 20px;
     }
 
-    .card .symbol { font-size: 28px; color: var(--gold); }
-    .card h3 { font-weight: normal; color: var(--pale); }
-    .card p { font-size: 14px; color: var(--muted); line-height: 1.7; }
-
-    .coming {
-      display: inline-block;
-      border: 1px solid #d8b66b60;
+    .card .symbol {
+      font-size: 34px;
       color: var(--gold);
-      padding: 8px 13px;
-      font-size: 11px;
-      letter-spacing: 2px;
-      margin-top: 12px;
     }
 
-    .chapter-list {
-      display: grid;
-      gap: 12px;
-      margin-top: 24px;
-      text-align: left;
-    }
-
-    .chapter {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      padding: 18px;
-      border: 1px solid #d8b66b45;
-      background: #080e2066;
-    }
-
-    .chapter h4 {
-      margin: 0 0 7px;
-      font-size: 17px;
+    .card h3 {
+      font-size: 22px;
       font-weight: normal;
       color: var(--gold);
     }
 
-    .chapter small { color: var(--muted); }
-    .chapter .button { margin: 0; white-space: nowrap; padding: 12px 16px; }
-    .status { color: var(--muted); line-height: 1.8; }
-    .error { color: #f0a6a6; }
+    .card p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .card .button {
+      margin-top: 15px;
+    }
 
     footer {
       border-top: 1px solid #d8b66b35;
@@ -195,22 +221,51 @@
       line-height: 1.8;
     }
 
-    footer span { color: var(--gold); }
-
-    @media (max-width: 700px) {
-      .cards { grid-template-columns: 1fr; }
-      .chapter { align-items: flex-start; flex-direction: column; }
-      .chapter .button { align-self: flex-start; }
+    footer span {
+      color: var(--gold);
     }
 
-    @media (max-width: 600px) {
-      nav { padding: 18px 5%; }
-      .brand { font-size: 12px; letter-spacing: 1px; }
-      .nav-note { font-size: 11px; }
-      .hero { min-height: auto; padding: 75px 5px; }
-      .intro { font-size: 15px; }
-      .card { padding: 18px; }
-      .eyebrow { letter-spacing: 3px; }
+    @media (max-width: 700px) {
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      nav {
+        padding: 18px 5%;
+      }
+
+      .brand {
+        font-size: 12px;
+        letter-spacing: 1px;
+      }
+
+      .nav-note {
+        font-size: 11px;
+        text-align: right;
+      }
+
+      .hero {
+        min-height: auto;
+        padding: 75px 5px;
+      }
+
+      .intro {
+        font-size: 15px;
+      }
+
+      .eyebrow {
+        letter-spacing: 2px;
+      }
+
+      .actions {
+        flex-direction: column;
+        width: 100%;
+        max-width: 320px;
+      }
+
+      .button {
+        text-align: center;
+      }
     }
   </style>
 </head>
@@ -224,6 +279,7 @@
   <main>
     <section class="hero">
       <div class="seal" aria-hidden="true">✧</div>
+
       <div class="eyebrow">Le savoir · Le mystère · La légende</div>
 
       <h1>Les Archives <span>de Scylla</span></h1>
@@ -233,43 +289,54 @@
       <p class="intro">
         Certaines histoires méritent d'être racontées.
         D'autres doivent être découvertes.
-        Ici, chaque Épreuve révèle un fragment de savoir,
-        chaque Chapitre écrit une nouvelle page,
-        et chaque Archiviste peut inscrire son nom dans la légende.
+        Chaque Chapitre ouvre une nouvelle Épreuve,
+        chaque Épreuve révèle des Fragments de Savoir.
+        À vous d'inscrire votre nom dans la légende.
       </p>
 
-      <a class="button" href="#bibliotheque">Entrer dans la Bibliothèque</a>
+      <div class="actions">
+        <a class="button" href="chapitres.html">
+          📜 Explorer les Chapitres
+        </a>
+
+        <a class="button secondary" href="classements.html">
+          🏆 Consulter les Classements
+        </a>
+      </div>
     </section>
 
-    <section class="section" id="bibliotheque">
-      <div class="eyebrow">Les portes vous attendent</div>
-      <h2>La Bibliothèque de Scylla</h2>
+    <section class="section">
+      <div class="eyebrow">Deux portes, une légende</div>
+      <h2>Explorez les Archives</h2>
+
       <p>
-        Explorez les univers, relevez les défis et récoltez les Fragments de Savoir.
-        Votre prochaine Épreuve commence ici.
+        Découvrez les Épreuves disponibles, mettez vos connaissances
+        à l'épreuve et retrouvez les résultats de chaque Chapitre.
       </p>
 
       <div class="cards">
         <article class="card">
-          <div class="symbol">📜</div>
-          <h3>Les Chapitres</h3>
-          <p>Des Épreuves de culture, de mémoire et d'observation.</p>
-          <div id="chapter-status" class="status" aria-live="polite">Consultation des Archives…</div>
-          <div id="chapter-list" class="chapter-list"></div>
-        </article>
-
-        <article class="card">
-          <div class="symbol">🔐</div>
-          <h3>Les Secrets</h3>
-          <p>Des manuscrits dissimulés aux Archivistes les plus curieux.</p>
-          <span class="coming">BIENTÔT DISPONIBLE</span>
+          <div class="symbol">📖</div>
+          <h3>La Bibliothèque</h3>
+          <p>
+            Parcourez les Volumes, découvrez les Chapitres ouverts
+            et participez aux Épreuves proposées par les Archives.
+          </p>
+          <a class="button" href="chapitres.html">
+            Ouvrir la Bibliothèque
+          </a>
         </article>
 
         <article class="card">
           <div class="symbol">🏆</div>
-          <h3>Le Classement</h3>
-          <p>Les Fragments récoltés et les noms gravés dans l'histoire.</p>
-          <span class="coming">BIENTÔT DISPONIBLE</span>
+          <h3>Les Classements</h3>
+          <p>
+            Retrouvez les scores des participants et découvrez
+            qui domine chaque Chapitre.
+          </p>
+          <a class="button secondary" href="classements.html">
+            Voir les Classements
+          </a>
         </article>
       </div>
     </section>
@@ -288,65 +355,5 @@
     <span>LES ARCHIVES DE SCYLLA</span><br>
     La Bibliothèque n'a pas encore révélé tous ses secrets.
   </footer>
-
-  <script>
-    const statusElement = document.getElementById("chapter-status");
-    const listElement = document.getElementById("chapter-list");
-
-    async function loadChapters() {
-      try {
-        const response = await fetch("/.netlify/functions/quiz", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "listChapters" })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Impossible de consulter les Archives.");
-        }
-
-        const chapters = Array.isArray(data.chapters) ? data.chapters : [];
-        listElement.replaceChildren();
-
-        if (chapters.length === 0) {
-          statusElement.textContent = "Aucun Chapitre n'est actuellement ouvert.";
-          return;
-        }
-
-        statusElement.textContent = `${chapters.length} Chapitre(s) accessible(s)`;
-
-        chapters.forEach((chapter) => {
-          const item = document.createElement("div");
-          item.className = "chapter";
-
-          const details = document.createElement("div");
-          const title = document.createElement("h4");
-          title.textContent = `Volume ${chapter.volume_number} · Chapitre ${chapter.chapter_number}`;
-
-          const subtitle = document.createElement("small");
-          subtitle.textContent = chapter.title;
-
-          details.append(title, subtitle);
-
-          const link = document.createElement("a");
-          link.className = "button";
-          link.textContent = "Participer";
-          link.href = `quiz.html?chapterId=${encodeURIComponent(chapter.id)}`;
-
-          item.append(details, link);
-          listElement.append(item);
-        });
-      } catch (error) {
-        statusElement.textContent =
-          "Les Archives sont momentanément inaccessibles. Réessaie dans quelques instants.";
-        statusElement.classList.add("error");
-        console.error("Chargement des Chapitres :", error);
-      }
-    }
-
-    loadChapters();
-  </script>
 </body>
 </html>
