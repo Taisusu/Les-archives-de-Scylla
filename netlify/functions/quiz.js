@@ -75,6 +75,20 @@ async function getPublishedChapter(chapterId) {
   return chapters[0] || null;
 }
 
+// Vérifie si ce pseudo a déjà envoyé un résultat pour ce chapitre.
+// Ignore les majuscules, les accents et la ponctuation.
+async function hasSubmittedChapter(chapterId, pseudo) {
+  const rows = await supabase(
+    `submissions?chapter_id=eq.${chapterId}&select=discord_pseudo`
+  );
+
+  const wantedPseudo = normalize(pseudo);
+
+  return rows.some(
+    (row) => normalize(row.discord_pseudo) === wantedPseudo
+  );
+}
+
 async function getAttempt(attemptId) {
   if (
     typeof attemptId !== "string" ||
@@ -114,8 +128,7 @@ exports.handler = async (event) => {
       });
     }
 
-    // Récupérer tous les chapitres, publiés ou non,
-    // pour afficher les grimoires ouverts et scellés.
+    // Récupérer les chapitres publiés et non publiés.
     if (input.action === "listChapters") {
       const chapters = await supabase(
         "chapters?select=id,title,volume_number,chapter_number,is_published&order=volume_number.asc,chapter_number.asc"
@@ -124,7 +137,6 @@ exports.handler = async (event) => {
       return json(200, { chapters });
     }
 
-    // Les actions du quiz nécessitent un identifiant de chapitre.
     const chapterId = Number(input.chapterId);
 
     if (!Number.isSafeInteger(chapterId) || chapterId < 1) {
@@ -147,12 +159,20 @@ exports.handler = async (event) => {
       });
     }
 
-    // Démarrer une tentative de quiz.
+    // Démarrer une tentative.
     if (input.action === "start") {
       const pseudo = String(input.pseudo || "").trim();
 
       if (!pseudo || pseudo.length > 50) {
         return json(400, { error: "Pseudo invalide." });
+      }
+
+      // Un résultat déjà scellé empêche une nouvelle participation
+      // avec le même pseudo pour ce chapitre.
+      if (await hasSubmittedChapter(chapterId, pseudo)) {
+        return json(409, {
+          error: "Ton résultat pour ce chapitre est déjà scellé. Seul ton premier envoi compte au classement."
+        });
       }
 
       const attempts = await supabase("quiz_attempts?select=id", {
@@ -210,7 +230,6 @@ exports.handler = async (event) => {
         `quiz_attempt_modes?attempt_id=eq.${attempt.id}&question_id=eq.${questionId}&select=id,selected_mode,displayed_options`
       );
 
-      // Si un mode existe déjà, il ne peut plus être changé.
       if (existing.length) {
         return json(200, {
           mode: existing[0].selected_mode,
@@ -286,7 +305,7 @@ exports.handler = async (event) => {
         }
       }
 
-      // CASH ne révèle aucune proposition.
+      // Le mode CASH ne révèle aucune proposition.
       await supabase("quiz_attempt_modes", {
         method: "POST",
         body: JSON.stringify({
@@ -306,6 +325,14 @@ exports.handler = async (event) => {
 
     // Corriger et enregistrer les réponses.
     if (input.action === "submit") {
+      // Vérification au moment de sceller le quiz :
+      // un résultat déjà enregistré reste définitif.
+      if (await hasSubmittedChapter(chapterId, attempt.discord_pseudo)) {
+        return json(409, {
+          error: "Un résultat a déjà été scellé pour ce pseudo dans ce chapitre. Le premier envoi reste définitif."
+        });
+      }
+
       const answers = input.answers;
 
       if (
@@ -433,6 +460,7 @@ exports.handler = async (event) => {
         });
       }
 
+      // Enregistrer le résultat.
       const submissions = await supabase("submissions?select=id", {
         method: "POST",
         headers: { Prefer: "return=representation" },
