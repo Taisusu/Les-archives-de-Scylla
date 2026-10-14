@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b1024">
   <title>Les Archives de Scylla — Épreuve</title>
+
   <style>
     :root {
       --night: #0b1024;
@@ -32,9 +33,7 @@
     }
 
     .container { max-width: 850px; margin: auto; }
-
     header { text-align: center; padding: 22px 12px 30px; }
-
     .symbol { color: var(--gold); font-size: 42px; }
 
     h1 {
@@ -65,7 +64,7 @@
 
     label { display: block; margin-bottom: 7px; color: var(--muted); }
 
-    input[type="text"], input[type="number"] {
+    input[type="text"] {
       width: 100%;
       padding: 13px;
       margin-bottom: 16px;
@@ -107,8 +106,14 @@
     .error { color: var(--error); border-color: #8a4545; }
     .success { color: var(--success); border-color: #427957; }
     .hidden { display: none !important; }
-
     .chapter-meta, .muted { color: var(--muted); }
+
+    .back {
+      display: inline-block;
+      margin: 0 0 20px;
+      color: var(--gold-light);
+      text-decoration: none;
+    }
 
     .progress {
       height: 7px;
@@ -206,6 +211,8 @@
       body { padding: 12px 10px 30px; }
       .panel, .question, .result-card { padding: 16px; }
       .question-text { font-size: 18px; }
+      .mode-buttons { gap: 5px; }
+      .mode-button { font-size: 13px; }
     }
   </style>
 </head>
@@ -219,16 +226,19 @@
     <div class="ornament">✧ ━━━━━ ✧ ━━━━━ ✧</div>
   </header>
 
+  <a class="back" href="chapitres.html">← Retour à la Bibliothèque</a>
+
   <section id="setup" class="panel">
-    <h2>Entrer dans les Archives</h2>
-    <p>Gardien, renseigne ton pseudo pour commencer l'épreuve.</p>
+    <h2 id="setup-title">Entrer dans les Archives</h2>
+    <p id="setup-description">Gardien, renseigne ton pseudo Discord pour commencer l'épreuve.</p>
+
     <form id="load-form">
       <label for="pseudo">Pseudo Discord</label>
-      <input id="pseudo" type="text" maxlength="50" required placeholder="Ton pseudo Discord">
-      <label for="chapter-id">Identifiant du chapitre (test uniquement)</label>
-      <input id="chapter-id" type="number" min="1" step="1" required placeholder="Ex. : 1">
+      <input id="pseudo" type="text" maxlength="50" required
+             placeholder="Ton pseudo Discord" autocomplete="nickname">
       <button class="primary" id="load-button" type="submit">Ouvrir le chapitre</button>
     </form>
+
     <div id="setup-message" class="message hidden" role="status"></div>
   </section>
 
@@ -240,10 +250,12 @@
       <div class="progress"><div id="progress-bar" class="progress-bar"></div></div>
       <p id="progress-text">0 réponse sur 0</p>
     </div>
+
     <form id="quiz-form">
       <div id="questions-container"></div>
       <button class="primary" id="submit-button" type="submit">Sceller mes réponses</button>
     </form>
+
     <div id="quiz-message" class="message hidden" role="status"></div>
   </section>
 
@@ -254,7 +266,9 @@
       <div id="score-number" class="score-number">0</div>
       <p>Fragments d'archive obtenus</p>
       <p id="result-pseudo"></p>
+      <a class="back" href="chapitres.html">← Retour à la Bibliothèque</a>
     </div>
+
     <div class="panel">
       <h2>Le registre des réponses</h2>
       <div id="corrections-container"></div>
@@ -266,6 +280,9 @@
 
 <script>
 const API_URL = "/.netlify/functions/quiz";
+const params = new URLSearchParams(window.location.search);
+const chapterFromUrl = params.get("chapterId");
+const chapterId = /^\d+$/.test(chapterFromUrl || "") ? Number(chapterFromUrl) : 0;
 
 const setup = document.getElementById("setup");
 const quizSection = document.getElementById("quiz-section");
@@ -311,26 +328,37 @@ async function callAPI(payload) {
   });
 
   const data = await response.json().catch(() => ({}));
+
   if (!response.ok || data.error) {
     throw new Error(data.error || "La requête a échoué.");
   }
+
   return data;
 }
 
 function getOptions(question) {
   if (!Array.isArray(question.options)) return [];
+
   return question.options.map(option => {
-    if (typeof option === "string" || typeof option === "number") return String(option);
-    if (option && typeof option === "object") return String(option.text ?? option.label ?? "");
+    if (typeof option === "string" || typeof option === "number") {
+      return String(option);
+    }
+    if (option && typeof option === "object") {
+      return String(option.text ?? option.label ?? "");
+    }
     return "";
   }).filter(Boolean);
 }
 
 function updateProgress() {
   const total = currentQuestions.length;
-  const answered = currentQuestions.filter(q => String(answers[q.id] ?? "").trim()).length;
+  const answered = currentQuestions.filter(
+    q => String(answers[q.id] ?? "").trim()
+  ).length;
+
   document.getElementById("progress-bar").style.width =
     (total ? answered / total * 100 : 0) + "%";
+
   document.getElementById("progress-text").textContent =
     `${answered} réponse(s) renseignée(s) sur ${total}`;
 }
@@ -354,10 +382,10 @@ function renderQuestions() {
           placeholder="Écris ta réponse..." required>
       `;
     } else {
-      const shownOptions = q.displayedOptions || [];
-      answerHTML = shownOptions.map(option => `
+      answerHTML = (q.displayedOptions || []).map(option => `
         <label class="choice">
-          <input type="radio" name="answer-${q.id}" value="${escapeHTML(option)}"
+          <input type="radio" name="answer-${q.id}"
+            value="${escapeHTML(option)}"
             ${answers[q.id] === option ? "checked" : ""} required>
           <span>${escapeHTML(option)}</span>
         </label>
@@ -365,6 +393,7 @@ function renderQuestions() {
     }
 
     const disabled = submitted ? "disabled" : "";
+
     const modeButton = (value, label, unavailable = false) => `
       <button type="button"
         class="mode-button ${mode === value ? "active" : ""}"
@@ -404,24 +433,31 @@ function renderQuestions() {
 async function chooseMode(questionId, mode) {
   if (modes[questionId] || submitted) return;
 
-  const question = currentQuestions.find(q => Number(q.id) === Number(questionId));
+  const question = currentQuestions.find(
+    q => Number(q.id) === Number(questionId)
+  );
   if (!question) return;
 
   const options = getOptions(question);
 
-  if (mode === "CARRE" && (question.question_type === "free_text" || options.length < 4)) {
+  if (mode === "CARRE" &&
+      (question.question_type === "free_text" || options.length < 4)) {
     message(quizMessage, "Cette question ne permet pas le mode CARRÉ.", "error");
     return;
   }
 
-  if (mode === "DUO" && (question.question_type === "free_text" || options.length < 2)) {
+  if (mode === "DUO" &&
+      (question.question_type === "free_text" || options.length < 2)) {
     message(quizMessage, "Cette question ne permet pas le mode DUO.", "error");
     return;
   }
 
   clearMessage(quizMessage);
+
   const card = document.querySelector(`[data-question-id="${questionId}"]`);
-  card.querySelectorAll("button[data-mode]").forEach(button => button.disabled = true);
+  card.querySelectorAll("button[data-mode]").forEach(button => {
+    button.disabled = true;
+  });
 
   try {
     const data = await callAPI({
@@ -437,7 +473,9 @@ async function chooseMode(questionId, mode) {
     answers[questionId] = "";
     renderQuestions();
   } catch (error) {
-    card.querySelectorAll("button[data-mode]").forEach(button => button.disabled = false);
+    card.querySelectorAll("button[data-mode]").forEach(button => {
+      button.disabled = false;
+    });
     message(quizMessage, error.message, "error");
   }
 }
@@ -447,10 +485,18 @@ loadForm.addEventListener("submit", async event => {
   clearMessage(setupMessage);
 
   playerPseudo = document.getElementById("pseudo").value.trim();
-  const chapterId = Number(document.getElementById("chapter-id").value);
 
-  if (!playerPseudo || !Number.isSafeInteger(chapterId) || chapterId < 1) {
-    message(setupMessage, "Vérifie ton pseudo et l'identifiant du chapitre.", "error");
+  if (!chapterId || !Number.isSafeInteger(chapterId) || chapterId < 1) {
+    message(
+      setupMessage,
+      "Aucun chapitre valide n'a été indiqué. Retourne à la Bibliothèque et clique sur PARTICIPER.",
+      "error"
+    );
+    return;
+  }
+
+  if (!playerPseudo || playerPseudo.length > 50) {
+    message(setupMessage, "Vérifie ton pseudo Discord.", "error");
     return;
   }
 
@@ -458,7 +504,11 @@ loadForm.addEventListener("submit", async event => {
   loadButton.textContent = "Ouverture des Archives...";
 
   try {
-    const data = await callAPI({ action: "start", chapterId, pseudo: playerPseudo });
+    const data = await callAPI({
+      action: "start",
+      chapterId,
+      pseudo: playerPseudo
+    });
 
     currentChapter = data.chapter;
     currentQuestions = data.questions;
@@ -471,13 +521,16 @@ loadForm.addEventListener("submit", async event => {
       answers[q.id] = "";
     });
 
-    document.getElementById("chapter-title").textContent = currentChapter.title;
+    document.getElementById("chapter-title").textContent =
+      currentChapter.title;
+
     document.getElementById("chapter-meta").textContent =
       `Volume ${currentChapter.volume_number} · Chapitre ${currentChapter.chapter_number}`;
 
     setup.classList.add("hidden");
     results.classList.add("hidden");
     quizSection.classList.remove("hidden");
+
     renderQuestions();
     window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (error) {
@@ -490,6 +543,7 @@ loadForm.addEventListener("submit", async event => {
 
 questionsContainer.addEventListener("click", event => {
   const button = event.target.closest("button[data-mode]");
+
   if (button && !button.disabled) {
     chooseMode(Number(button.dataset.question), button.dataset.mode);
   }
@@ -498,22 +552,28 @@ questionsContainer.addEventListener("click", event => {
 questionsContainer.addEventListener("input", event => {
   const input = event.target.closest("[data-answer-for]");
   if (!input || submitted) return;
+
   answers[input.dataset.answerFor] = input.value;
   updateProgress();
 });
 
 questionsContainer.addEventListener("change", event => {
   const input = event.target;
-  if (!(input instanceof HTMLInputElement) || input.type !== "radio" || submitted) return;
+
+  if (!(input instanceof HTMLInputElement) ||
+      input.type !== "radio" || submitted) return;
+
   const match = input.name.match(/^answer-(\d+)$/);
   if (!match) return;
+
   answers[match[1]] = input.value;
   updateProgress();
 });
 
 function renderCorrections(corrections) {
   if (!Array.isArray(corrections) || !corrections.length) {
-    correctionsContainer.textContent = "Aucune correction n'a été renvoyée.";
+    correctionsContainer.textContent =
+      "Aucune correction n'a été renvoyée.";
     return;
   }
 
@@ -526,7 +586,9 @@ function renderCorrections(corrections) {
         ${item.correct ? "✓ Bonne réponse" : "✗ Réponse incorrecte"}
         · ${escapeHTML(item.fragments)} fragment(s)
       </p>
-      ${item.explanation ? `<p class="explanation">${escapeHTML(item.explanation)}</p>` : ""}
+      ${item.explanation
+        ? `<p class="explanation">${escapeHTML(item.explanation)}</p>`
+        : ""}
     </div>
   `).join("");
 }
@@ -538,14 +600,22 @@ quizForm.addEventListener("submit", async event => {
   if (submitted) return;
 
   const missingMode = currentQuestions.find(q => !modes[q.id]);
+
   if (missingMode) {
-    message(quizMessage, "Choisis un mode pour chaque question avant de valider.", "error");
+    message(
+      quizMessage,
+      "Choisis un mode pour chaque question avant de valider.",
+      "error"
+    );
     document.querySelector(`[data-question-id="${missingMode.id}"]`)
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
     return;
   }
 
-  const missingAnswer = currentQuestions.find(q => !String(answers[q.id] || "").trim());
+  const missingAnswer = currentQuestions.find(
+    q => !String(answers[q.id] || "").trim()
+  );
+
   if (missingAnswer) {
     message(quizMessage, "Il reste des questions sans réponse.", "error");
     document.querySelector(`[data-question-id="${missingAnswer.id}"]`)
@@ -553,7 +623,9 @@ quizForm.addEventListener("submit", async event => {
     return;
   }
 
-  if (!window.confirm("Es-tu certain de vouloir sceller tes réponses ? Cette action est définitive.")) {
+  if (!window.confirm(
+    "Es-tu certain de vouloir sceller tes réponses ? Cette action est définitive."
+  )) {
     return;
   }
 
@@ -575,7 +647,9 @@ quizForm.addEventListener("submit", async event => {
     });
 
     submitted = true;
-    document.getElementById("score-number").textContent = data.totalFragments;
+    document.getElementById("score-number").textContent =
+      data.totalFragments;
+
     document.getElementById("result-pseudo").textContent =
       `Épreuve scellée par ${playerPseudo}`;
 
@@ -591,10 +665,13 @@ quizForm.addEventListener("submit", async event => {
   }
 });
 
-const params = new URLSearchParams(window.location.search);
-const chapterFromUrl = params.get("chapter");
-if (chapterFromUrl && /^\d+$/.test(chapterFromUrl)) {
-  document.getElementById("chapter-id").value = chapterFromUrl;
+// Si la page est ouverte sans chapitre, on prévient le joueur.
+if (!chapterId || chapterId < 1) {
+  message(
+    setupMessage,
+    "Pour commencer une épreuve, retourne à la Bibliothèque et clique sur PARTICIPER sur le grimoire de ton choix.",
+    "error"
+  );
 }
 </script>
 </body>
