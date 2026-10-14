@@ -325,8 +325,7 @@ exports.handler = async (event) => {
 
     // Corriger et enregistrer les réponses.
     if (input.action === "submit") {
-      // Vérification au moment de sceller le quiz :
-      // un résultat déjà enregistré reste définitif.
+      // Vérification avant de commencer la correction.
       if (await hasSubmittedChapter(chapterId, attempt.discord_pseudo)) {
         return json(409, {
           error: "Un résultat a déjà été scellé pour ce pseudo dans ce chapitre. Le premier envoi reste définitif."
@@ -457,6 +456,15 @@ exports.handler = async (event) => {
             question.correct_answer_display || accepted.join(" / "),
           explanation: question.explanation || "",
           fragments: points
+        });
+      }
+
+      // Deuxième vérification juste avant l'enregistrement.
+      // Cela réduit le risque qu'une tentative commencée plus tôt
+      // remplace un résultat déjà scellé entre-temps.
+      if (await hasSubmittedChapter(chapterId, attempt.discord_pseudo)) {
+        return json(409, {
+          error: "Un résultat a déjà été scellé pour ce pseudo dans ce chapitre. Le premier envoi reste définitif."
         });
       }
 
