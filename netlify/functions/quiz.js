@@ -39,7 +39,20 @@ async function supabase(path, options = {}) {
 
   if (!response.ok) {
     console.error("Erreur Supabase :", response.status, body);
-    throw new Error("La base de données a refusé la requête.");
+
+    let details = {};
+    try {
+      details = body ? JSON.parse(body) : {};
+    } catch {
+      // Le corps de l'erreur n'est pas nécessairement du JSON.
+    }
+
+    const error = new Error("La base de données a refusé la requête.");
+    error.status = response.status;
+    error.code = details.code || null;
+    error.details = details.details || null;
+    error.messageFromDatabase = details.message || null;
+    throw error;
   }
 
   return body ? JSON.parse(body) : null;
@@ -75,8 +88,8 @@ async function getPublishedChapter(chapterId) {
   return chapters[0] || null;
 }
 
-// Vérifie si ce pseudo a déjà envoyé un résultat pour ce chapitre.
-// Ignore les majuscules, les accents et la ponctuation.
+// Vérifie si le pseudo possède déjà un résultat dans ce chapitre.
+// Ignore les majuscules, accents, ponctuation et espaces superflus.
 async function hasSubmittedChapter(chapterId, pseudo) {
   const rows = await supabase(
     `submissions?chapter_id=eq.${chapterId}&select=discord_pseudo`
@@ -106,7 +119,9 @@ async function getAttempt(attemptId) {
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
-    return json(405, { error: "Méthode non autorisée." });
+    return json(405, {
+      error: "Méthode non autorisée."
+    });
   }
 
   let input;
@@ -114,7 +129,9 @@ exports.handler = async (event) => {
   try {
     input = JSON.parse(event.body || "{}");
   } catch {
-    return json(400, { error: "La requête n'est pas un JSON valide." });
+    return json(400, {
+      error: "La requête n'est pas un JSON valide."
+    });
   }
 
   try {
@@ -128,7 +145,7 @@ exports.handler = async (event) => {
       });
     }
 
-    // Récupérer les chapitres publiés et non publiés.
+    // Liste des chapitres publiés et non publiés.
     if (input.action === "listChapters") {
       const chapters = await supabase(
         "chapters?select=id,title,volume_number,chapter_number,is_published&order=volume_number.asc,chapter_number.asc"
@@ -140,13 +157,17 @@ exports.handler = async (event) => {
     const chapterId = Number(input.chapterId);
 
     if (!Number.isSafeInteger(chapterId) || chapterId < 1) {
-      return json(400, { error: "Chapitre invalide." });
+      return json(400, {
+        error: "Chapitre invalide."
+      });
     }
 
     const chapter = await getPublishedChapter(chapterId);
 
     if (!chapter) {
-      return json(404, { error: "Chapitre indisponible." });
+      return json(404, {
+        error: "Chapitre indisponible."
+      });
     }
 
     const questions = await supabase(
@@ -164,11 +185,11 @@ exports.handler = async (event) => {
       const pseudo = String(input.pseudo || "").trim();
 
       if (!pseudo || pseudo.length > 50) {
-        return json(400, { error: "Pseudo invalide." });
+        return json(400, {
+          error: "Pseudo invalide."
+        });
       }
 
-      // Un résultat déjà scellé empêche une nouvelle participation
-      // avec le même pseudo pour ce chapitre.
       if (await hasSubmittedChapter(chapterId, pseudo)) {
         return json(409, {
           error: "Ton résultat pour ce chapitre est déjà scellé. Seul ton premier envoi compte au classement."
@@ -177,7 +198,9 @@ exports.handler = async (event) => {
 
       const attempts = await supabase("quiz_attempts?select=id", {
         method: "POST",
-        headers: { Prefer: "return=representation" },
+        headers: {
+          Prefer: "return=representation"
+        },
         body: JSON.stringify({
           chapter_id: chapterId,
           discord_pseudo: pseudo
@@ -215,7 +238,9 @@ exports.handler = async (event) => {
       const mode = input.mode;
 
       if (!["CASH", "CARRE", "DUO"].includes(mode)) {
-        return json(400, { error: "Mode invalide." });
+        return json(400, {
+          error: "Mode invalide."
+        });
       }
 
       const question = questions.find(
@@ -223,7 +248,9 @@ exports.handler = async (event) => {
       );
 
       if (!question) {
-        return json(400, { error: "Question invalide." });
+        return json(400, {
+          error: "Question invalide."
+        });
       }
 
       const existing = await supabase(
@@ -285,6 +312,7 @@ exports.handler = async (event) => {
         }
 
         const correctOption = randomItem(correctOptions);
+
         const distractors = allOptions.filter(
           (option) => normalize(option) !== normalize(correctOption)
         );
@@ -325,7 +353,6 @@ exports.handler = async (event) => {
 
     // Corriger et enregistrer les réponses.
     if (input.action === "submit") {
-      // Vérification avant de commencer la correction.
       if (await hasSubmittedChapter(chapterId, attempt.discord_pseudo)) {
         return json(409, {
           error: "Un résultat a déjà été scellé pour ce pseudo dans ce chapitre. Le premier envoi reste définitif."
@@ -355,7 +382,9 @@ exports.handler = async (event) => {
           answer.answer.trim().length === 0 ||
           answer.answer.length > 1000
         ) {
-          return json(400, { error: "Une réponse est invalide." });
+          return json(400, {
+            error: "Une réponse est invalide."
+          });
         }
 
         submitted.set(id, answer);
@@ -459,9 +488,9 @@ exports.handler = async (event) => {
         });
       }
 
-      // Deuxième vérification juste avant l'enregistrement.
-      // Cela réduit le risque qu'une tentative commencée plus tôt
-      // remplace un résultat déjà scellé entre-temps.
+      // Dernière vérification avant l'insertion.
+      // La contrainte SQL à ajouter ensuite sera nécessaire pour
+      // empêcher également les validations véritablement simultanées.
       if (await hasSubmittedChapter(chapterId, attempt.discord_pseudo)) {
         return json(409, {
           error: "Un résultat a déjà été scellé pour ce pseudo dans ce chapitre. Le premier envoi reste définitif."
@@ -469,15 +498,31 @@ exports.handler = async (event) => {
       }
 
       // Enregistrer le résultat.
-      const submissions = await supabase("submissions?select=id", {
-        method: "POST",
-        headers: { Prefer: "return=representation" },
-        body: JSON.stringify({
-          chapter_id: chapterId,
-          discord_pseudo: attempt.discord_pseudo,
-          total_fragments: total
-        })
-      });
+      let submissions;
+
+      try {
+        submissions = await supabase("submissions?select=id", {
+          method: "POST",
+          headers: {
+            Prefer: "return=representation"
+          },
+          body: JSON.stringify({
+            chapter_id: chapterId,
+            discord_pseudo: attempt.discord_pseudo,
+            total_fragments: total
+          })
+        });
+      } catch (error) {
+        // Une contrainte unique PostgreSQL renvoie normalement 23505.
+        // Le code 409 couvre également un conflit HTTP.
+        if (error.code === "23505" || error.status === 409) {
+          return json(409, {
+            error: "Ton résultat pour ce chapitre a déjà été enregistré. Le premier envoi reste définitif."
+          });
+        }
+
+        throw error;
+      }
 
       const submissionId = submissions?.[0]?.id;
 
@@ -485,6 +530,7 @@ exports.handler = async (event) => {
         throw new Error("Enregistrement du résultat impossible.");
       }
 
+      // Enregistrer les réponses liées à cette soumission.
       await supabase("answers", {
         method: "POST",
         body: JSON.stringify(
@@ -495,6 +541,7 @@ exports.handler = async (event) => {
         )
       });
 
+      // Marquer la tentative comme envoyée.
       await supabase(`quiz_attempts?id=eq.${attempt.id}`, {
         method: "PATCH",
         body: JSON.stringify({
@@ -508,7 +555,9 @@ exports.handler = async (event) => {
       });
     }
 
-    return json(400, { error: "Action inconnue." });
+    return json(400, {
+      error: "Action inconnue."
+    });
 
   } catch (error) {
     console.error("Erreur quiz :", error);
