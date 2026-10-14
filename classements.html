@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -16,7 +16,9 @@
       --muted: #b4b5c5;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -42,15 +44,25 @@
       text-transform: uppercase;
       letter-spacing: 2px;
       font-size: 14px;
+      text-decoration: none;
+      transition: color 0.2s;
     }
 
-    header a, .back {
+    .brand:hover {
+      color: var(--pale);
+    }
+
+    header a:not(.brand),
+    .back {
       color: var(--muted);
       text-decoration: none;
       font-size: 13px;
     }
 
-    header a:hover, .back:hover { color: var(--gold); }
+    header a:hover,
+    .back:hover {
+      color: var(--gold);
+    }
 
     main {
       width: min(850px, 90%);
@@ -73,7 +85,10 @@
       margin: 18px 0;
     }
 
-    h1 span { color: var(--gold); font-style: italic; }
+    h1 span {
+      color: var(--gold);
+      font-style: italic;
+    }
 
     .intro {
       max-width: 580px;
@@ -124,7 +139,7 @@
       letter-spacing: 1px;
       font-size: 11px;
       font-weight: bold;
-      transition: .2s;
+      transition: 0.2s;
     }
 
     .button:hover {
@@ -139,7 +154,9 @@
       padding: 20px 0;
     }
 
-    .error { color: #f0a6a6; }
+    .error {
+      color: #f0a6a6;
+    }
 
     footer {
       border-top: 1px solid #d8b66b35;
@@ -150,23 +167,42 @@
     }
 
     @media (max-width: 600px) {
-      header { padding: 18px 5%; }
-      .brand { font-size: 11px; letter-spacing: 1px; }
-      main { padding: 45px 0; }
-      .chapter { align-items: flex-start; flex-direction: column; }
-      .button { align-self: flex-start; }
+      header {
+        padding: 18px 5%;
+      }
+
+      .brand {
+        font-size: 11px;
+        letter-spacing: 1px;
+      }
+
+      main {
+        padding: 45px 0;
+      }
+
+      .chapter {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .button {
+        align-self: flex-start;
+      }
     }
   </style>
 </head>
 
 <body>
   <header>
-    <div class="brand">✦ Archives de Scylla</div>
+    <a class="brand" href="index.html" aria-label="Retour à l'accueil des Archives de Scylla">
+      ✦ Archives de Scylla
+    </a>
     <a href="index.html">← Retour à l'accueil</a>
   </header>
 
   <main>
     <div class="eyebrow">Les traces laissées par les participants</div>
+
     <h1>Les <span>Classements</span></h1>
 
     <p class="intro">
@@ -182,18 +218,26 @@
     <div id="chapter-list" class="chapter-list"></div>
   </main>
 
-  <footer>LES ARCHIVES DE SCYLLA · Le savoir laisse des traces.</footer>
+  <footer>
+    LES ARCHIVES DE SCYLLA · Le savoir laisse des traces.
+  </footer>
 
   <script>
     const statusElement = document.getElementById("status");
     const listElement = document.getElementById("chapter-list");
 
     async function loadChapters() {
+      statusElement.classList.remove("error");
+
       try {
         const response = await fetch("/.netlify/functions/leaderboard", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "listChapters" })
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            action: "listChapters"
+          })
         });
 
         const data = await response.json();
@@ -244,7 +288,9 @@
       } catch (error) {
         statusElement.textContent =
           "Les registres sont momentanément inaccessibles. Réessaie plus tard.";
+
         statusElement.classList.add("error");
+
         console.error("Chargement des classements :", error);
       }
     }
@@ -253,3 +299,4 @@
   </script>
 </body>
 </html>
+```
