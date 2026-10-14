@@ -114,10 +114,11 @@ exports.handler = async (event) => {
       });
     }
 
-    // NOUVEAU : récupérer les chapitres publiés pour la page d'accueil.
+    // Récupérer tous les chapitres, publiés ou non,
+    // pour afficher les grimoires ouverts et scellés.
     if (input.action === "listChapters") {
       const chapters = await supabase(
-        "chapters?is_published=eq.true&select=id,title,volume_number,chapter_number&order=volume_number.asc,chapter_number.asc"
+        "chapters?select=id,title,volume_number,chapter_number,is_published&order=volume_number.asc,chapter_number.asc"
       );
 
       return json(200, { chapters });
