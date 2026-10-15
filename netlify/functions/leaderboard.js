@@ -16,13 +16,13 @@ async function supabase(path) {
     throw new Error("Configuration Supabase manquante.");
   }
 
-  const response = await fetch(${url}/rest/v1/${path}, {
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json"
-    }
-  });
+const response = await fetch(url + "/rest/v1/" + path, {
+  headers: {
+    apikey: key,
+    Authorization: "Bearer " + key,
+    "Content-Type": "application/json"
+  }
+});
 
   const body = await response.text();
 
