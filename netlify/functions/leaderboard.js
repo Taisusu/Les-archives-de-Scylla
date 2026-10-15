@@ -1,4 +1,3 @@
-```javascript
 const json = (statusCode, data) => ({
   statusCode,
   headers: {
@@ -16,13 +15,13 @@ async function supabase(path) {
     throw new Error("Configuration Supabase manquante.");
   }
 
-const response = await fetch(url + "/rest/v1/" + path, {
-  headers: {
-    apikey: key,
-    Authorization: "Bearer " + key,
-    "Content-Type": "application/json"
-  }
-});
+  const response = await fetch(url + "/rest/v1/" + path, {
+    headers: {
+      apikey: key,
+      Authorization: "Bearer " + key,
+      "Content-Type": "application/json"
+    }
+  });
 
   const body = await response.text();
 
@@ -96,7 +95,7 @@ exports.handler = async (event) => {
 
       // Vérifier que le chapitre existe et est publié.
       const chapters = await supabase(
-        `chapters?id=eq.${chapterId}&is_published=eq.true&select=id,title,volume_number,chapter_number`
+        "chapters?id=eq." + chapterId + "&is_published=eq.true&select=id,title,volume_number,chapter_number"
       );
 
       const chapter = chapters[0];
@@ -110,7 +109,7 @@ exports.handler = async (event) => {
       // Le premier résultat est déterminé par la date d'envoi,
       // avec l'identifiant comme départage déterministe.
       const submissions = await supabase(
-        `submissions?chapter_id=eq.${chapterId}&select=id,discord_pseudo,total_fragments,submitted_at&order=submitted_at.asc,id.asc`
+        "submissions?chapter_id=eq." + chapterId + "&select=id,discord_pseudo,total_fragments,submitted_at&order=submitted_at.asc,id.asc"
       );
 
       // Garder uniquement la première soumission de chaque pseudo.
@@ -180,4 +179,3 @@ exports.handler = async (event) => {
     });
   }
 };
-```
