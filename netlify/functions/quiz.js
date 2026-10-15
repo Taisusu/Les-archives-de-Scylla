@@ -1,4 +1,3 @@
-
 const json = (statusCode, data) => ({
   statusCode,
   headers: {
@@ -88,31 +87,30 @@ async function getPublishedChapter(chapterId) {
   return chapters[0] || null;
 }
 
-// Vérifie les dates programmées pour le chapitre.
+// Vérifie si le chapitre est ouvert selon ses dates configurées dans Supabase.
 function getChapterScheduleError(chapter) {
-  // Sans dates configurées, on conserve le comportement actuel.
   if (!chapter.opens_at || !chapter.closes_at) {
-    return null;
+    return "Les dates d’ouverture et de fermeture de ce chapitre ne sont pas configurées.";
   }
 
-  const opensAt = new Date(chapter.opens_at);
-  const closesAt = new Date(chapter.closes_at);
-  const now = new Date();
+  const opensAt = Date.parse(chapter.opens_at);
+  const closesAt = Date.parse(chapter.closes_at);
+  const now = Date.now();
 
   if (
-    Number.isNaN(opensAt.getTime()) ||
-    Number.isNaN(closesAt.getTime()) ||
+    !Number.isFinite(opensAt) ||
+    !Number.isFinite(closesAt) ||
     closesAt <= opensAt
   ) {
-    return "Les horaires de ce chapitre ne sont pas correctement configurés. Contacte l'équipe des Archives.";
+    return "Les dates d’ouverture et de fermeture de ce chapitre sont invalides.";
   }
 
   if (now < opensAt) {
-    return "Ce chapitre n'est pas encore ouvert. Reviens à la date et à l'heure prévues.";
+    return "Ce chapitre n’est pas encore ouvert.";
   }
 
   if (now >= closesAt) {
-    return "Ce chapitre est fermé. Les participations ne sont plus acceptées.";
+    return "Ce chapitre est fermé. Les réponses ne sont plus acceptées.";
   }
 
   return null;
@@ -199,7 +197,7 @@ exports.handler = async (event) => {
       });
     }
 
-    // Bloque démarrage, choix des modes et envoi hors du créneau configuré.
+    // Bloquer le démarrage, le choix des modes et l'envoi après la fermeture.
     if (["start", "chooseMode", "submit"].includes(input.action)) {
       const scheduleError = getChapterScheduleError(chapter);
 
