@@ -1,3 +1,4 @@
+```javascript
 const json = (statusCode, data) => ({
   statusCode,
   headers: {
@@ -172,10 +173,10 @@ exports.handler = async (event) => {
       });
     }
 
-    // Liste des chapitres.
+    // Liste des chapitres avec leurs dates d'ouverture et de fermeture.
     if (input.action === "listChapters") {
       const chapters = await supabase(
-        "chapters?select=id,title,volume_number,chapter_number,is_published&order=volume_number.asc,chapter_number.asc"
+        "chapters?select=id,title,volume_number,chapter_number,is_published,opens_at,closes_at&order=volume_number.asc,chapter_number.asc"
       );
 
       return json(200, { chapters });
@@ -637,3 +638,4 @@ exports.handler = async (event) => {
     });
   }
 };
+```
