@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -267,13 +267,16 @@
         [100, "C"], [90, "XC"], [50, "L"], [40, "XL"],
         [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]
       ];
+
       let result = "";
+
       for (const [value, symbol] of values) {
         while (number >= value) {
           result += symbol;
           number -= value;
         }
       }
+
       return result || String(number);
     }
 
@@ -302,13 +305,19 @@
 
     function escapeHtml(value) {
       return String(value ?? "").replace(/[&<>"']/g, char => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;",
-        '"': "&quot;", "'": "&#39;"
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
       })[char]);
     }
 
+    // Affiche l'état de chaque chapitre selon ses dates Supabase.
     function renderLibrary(chapters) {
       library.innerHTML = "";
+
+      const now = Date.now();
 
       const maxVolume = Math.max(
         1,
@@ -316,13 +325,18 @@
       );
 
       const volumes = new Map();
+
       for (let volume = 1; volume <= maxVolume; volume++) {
         volumes.set(volume, []);
       }
 
       for (const chapter of chapters) {
         const volume = Number(chapter.volume_number) || 1;
-        if (!volumes.has(volume)) volumes.set(volume, []);
+
+        if (!volumes.has(volume)) {
+          volumes.set(volume, []);
+        }
+
         volumes.get(volume).push(chapter);
       }
 
@@ -335,25 +349,60 @@
         for (const chapter of volumeChapters) {
           const chapterNumber = Number(chapter.chapter_number) || 0;
           const published = chapter.is_published === true;
-          const teaser = chapter.teaser_title || chapter.title ||
+
+          const opensAt = Date.parse(chapter.opens_at || "");
+          const closesAt = Date.parse(chapter.closes_at || "");
+
+          let state = "sealed";
+          let label = "Scellé";
+          let description = "Ce secret n'a pas encore été dévoilé.";
+          let canParticipate = false;
+
+          if (published) {
+            if (
+              !chapter.opens_at ||
+              !chapter.closes_at ||
+              !Number.isFinite(opensAt) ||
+              !Number.isFinite(closesAt) ||
+              closesAt <= opensAt
+            ) {
+              label = "Horaires à définir";
+              description = "Les horaires de cette épreuve ne sont pas configurés.";
+            } else if (now < opensAt) {
+              label = "À venir";
+              description = "Ce grimoire n'est pas encore ouvert.";
+            } else if (now >= closesAt) {
+              label = "Fermé";
+              description = "Le temps de cette épreuve est écoulé.";
+            } else {
+              state = "available";
+              label = "Ouvert";
+              description = "Le grimoire est ouvert. L'épreuve vous attend.";
+              canParticipate = true;
+            }
+          }
+
+          const teaser = chapter.teaser_title ||
+            chapter.title ||
             `Chapitre ${roman(chapterNumber)}`;
 
           cards.push(`
-            <article class="book ${published ? "available" : "sealed"}">
+            <article class="book ${state === "available" ? "available" : "sealed"}">
               <div class="book-top">
                 <span>Chapitre ${roman(chapterNumber)}</span>
-                <span>${published ? "Ouvert" : "Scellé"}</span>
+                <span>${label}</span>
               </div>
+
               <div class="book-art">${bookArtwork()}</div>
+
               <div class="book-info">
                 <h3>${escapeHtml(teaser)}</h3>
-                <p>${published
-                  ? "Le grimoire est ouvert. L'épreuve vous attend."
-                  : "Ce secret n'a pas encore été dévoilé."}</p>
+                <p>${description}</p>
               </div>
-              ${published
+
+              ${canParticipate
                 ? `<a class="book-action" href="quiz.html?chapterId=${encodeURIComponent(chapter.id)}">PARTICIPER</a>`
-                : `<span class="book-action">SCELLÉ</span>`}
+                : `<span class="book-action" aria-disabled="true">${label.toUpperCase()}</span>`}
             </article>
           `);
         }
@@ -365,8 +414,10 @@
               <p class="volume-subtitle">${volumeChapters.length} grimoire(s) dans les Archives</p>
             </div>
           </div>
+
           <div class="books">${cards.join("")}</div>
         `;
+
         library.appendChild(section);
       }
 
@@ -382,22 +433,33 @@
       try {
         const response = await fetch("/.netlify/functions/quiz", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "listChapters" })
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            action: "listChapters"
+          })
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || "Impossible de consulter les Archives.");
+          throw new Error(
+            data.error || "Impossible de consulter les Archives."
+          );
         }
 
-        const chapters = Array.isArray(data.chapters) ? data.chapters : [];
+        const chapters = Array.isArray(data.chapters)
+          ? data.chapters
+          : [];
+
         renderLibrary(chapters);
       } catch (error) {
         status.textContent =
           "Impossible d'ouvrir les Archives pour le moment. Réessaie dans quelques instants.";
+
         status.classList.add("error");
+
         console.error("Erreur de chargement des chapitres :", error);
       }
     }
@@ -406,3 +468,4 @@
   </script>
 </body>
 </html>
+```
