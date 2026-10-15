@@ -207,3 +207,395 @@ exports.handler = async (event) => {
 
       if (!attempts?.[0]?.id) {
         throw new Error("Création de la tentative impossible.");
+      }
+
+      return json(200, {
+        attemptId: attempts[0].id,
+        chapter,
+        questions
+      });
+    }
+
+    const attempt = await getAttempt(input.attemptId);
+
+    if (!attempt || Number(attempt.chapter_id) !== chapterId) {
+      return json(400, {
+        error: "Tentative invalide. Recharge le chapitre."
+      });
+    }
+
+    if (attempt.submitted_at) {
+      return json(409, {
+        error: "Cette tentative a déjà été envoyée."
+      });
+    }
+
+    // Enregistrer définitivement le mode choisi.
+    if (input.action === "chooseMode") {
+      const questionId = Number(input.questionId);
+      const mode = input.mode;
+
+      if (!["CASH", "CARRE", "DUO"].includes(mode)) {
+        return json(400, {
+          error: "Mode invalide."
+        });
+      }
+
+      const question = questions.find(
+        (q) => Number(q.id) === questionId
+      );
+
+      if (!question) {
+        return json(400, {
+          error: "Question invalide."
+        });
+      }
+
+      const existing = await supabase(
+        "quiz_attempt_modes?attempt_id=eq." + attempt.id + "&question_id=eq." + questionId + "&select=id,selected_mode,displayed_options"
+      );
+
+      if (existing.length) {
+        return json(200, {
+          mode: existing[0].selected_mode,
+          options: existing[0].displayed_options || [],
+          locked: true
+        });
+      }
+
+      const allOptions = getOptions(question);
+      let displayedOptions = [];
+
+      if (mode === "CARRE") {
+        if (
+          question.question_type === "free_text" ||
+          allOptions.length < 4
+        ) {
+          return json(400, {
+            error: "Le mode CARRÉ exige une question avec au moins quatre propositions."
+          });
+        }
+
+        displayedOptions = allOptions;
+      }
+
+      if (mode === "DUO") {
+        if (
+          question.question_type === "free_text" ||
+          allOptions.length < 2
+        ) {
+          return json(400, {
+            error: "Le mode DUO exige une question à choix multiples."
+          });
+        }
+
+        const fullQuestions = await supabase(
+          "questions?id=eq." + questionId + "&select=correct_answers"
+        );
+
+        const accepted = Array.isArray(
+          fullQuestions[0]?.correct_answers
+        )
+          ? fullQuestions[0].correct_answers.map(normalize)
+          : [];
+
+        const correctOptions = allOptions.filter((option) =>
+          accepted.includes(normalize(option))
+        );
+
+        if (!correctOptions.length) {
+          return json(400, {
+            error: "Le mode DUO ne peut pas être préparé : aucune proposition correcte ne correspond aux réponses enregistrées."
+          });
+        }
+
+        const correctOption = randomItem(correctOptions);
+        const distractors = allOptions.filter(
+          (option) => normalize(option) !== normalize(correctOption)
+        );
+
+        if (!distractors.length) {
+          return json(400, {
+            error: "Propositions insuffisantes pour le mode DUO."
+          });
+        }
+
+        displayedOptions = [
+          correctOption,
+          randomItem(distractors)
+        ];
+
+        if (Math.random() < 0.5) {
+          displayedOptions.reverse();
+        }
+      }
+
+      // CASH ne révèle aucune proposition.
+      try {
+        await supabase("quiz_attempt_modes", {
+          method: "POST",
+          body: JSON.stringify({
+            attempt_id: attempt.id,
+            question_id: questionId,
+            selected_mode: mode,
+            displayed_options: displayedOptions
+          })
+        });
+      } catch (error) {
+        if (error.code === "23505" || error.status === 409) {
+          const saved = await supabase(
+            "quiz_attempt_modes?attempt_id=eq." + attempt.id + "&question_id=eq." + questionId + "&select=selected_mode,displayed_options"
+          );
+
+          if (saved[0]) {
+            return json(200, {
+              mode: saved[0].selected_mode,
+              options: saved[0].displayed_options || [],
+              locked: true
+            });
+          }
+        }
+
+        throw error;
+      }
+
+      return json(200, {
+        mode,
+        options: displayedOptions,
+        locked: true
+      });
+    }
+
+    // Corriger et enregistrer les réponses.
+    if (input.action === "submit") {
+      if (await hasSubmittedChapter(chapterId, attempt.discord_pseudo)) {
+        return json(409, {
+          error: "Tu as déjà envoyé tes réponses pour ce chapitre. Ton premier résultat reste définitif."
+        });
+      }
+
+      const answers = input.answers;
+
+      if (
+        !Array.isArray(answers) ||
+        answers.length !== questions.length
+      ) {
+        return json(400, {
+          error: "Le nombre de réponses ne correspond pas au quiz."
+        });
+      }
+
+      const submitted = new Map();
+
+      for (const answer of answers) {
+        if (!answer || typeof answer !== "object") {
+          return json(400, {
+            error: "Une réponse est invalide."
+          });
+        }
+
+        const id = Number(answer.questionId);
+
+        if (
+          !Number.isSafeInteger(id) ||
+          !questions.some((q) => Number(q.id) === id) ||
+          submitted.has(id) ||
+          typeof answer.answer !== "string" ||
+          answer.answer.trim().length === 0 ||
+          answer.answer.length > 1000
+        ) {
+          return json(400, {
+            error: "Une réponse est invalide."
+          });
+        }
+
+        submitted.set(id, answer);
+      }
+
+      const savedModes = await supabase(
+        "quiz_attempt_modes?attempt_id=eq." + attempt.id + "&select=question_id,selected_mode,displayed_options"
+      );
+
+      const modesByQuestion = new Map(
+        savedModes.map((item) => [
+          Number(item.question_id),
+          item
+        ])
+      );
+
+      if (
+        modesByQuestion.size !== questions.length ||
+        questions.some((q) => !modesByQuestion.has(Number(q.id)))
+      ) {
+        return json(400, {
+          error: "Choisis un mode pour chaque question avant de valider."
+        });
+      }
+
+      const fullQuestions = await supabase(
+        "questions?chapter_id=eq." + chapterId + "&select=id,question_number,question_text,question_type,options,correct_answers,correct_answer_display,explanation,is_double&order=question_number.asc"
+      );
+
+      if (fullQuestions.length !== questions.length) {
+        return json(400, {
+          error: "Les questions du chapitre ont changé. Recharge le quiz."
+        });
+      }
+
+      const corrections = [];
+      const storedAnswers = [];
+      let total = 0;
+
+      for (const question of fullQuestions) {
+        const answer = submitted.get(Number(question.id));
+        const savedMode = modesByQuestion.get(Number(question.id));
+
+        if (!answer || !savedMode) {
+          return json(400, {
+            error: "Une question est incomplète."
+          });
+        }
+
+        if (answer.mode !== savedMode.selected_mode) {
+          return json(400, {
+            error: "Un mode ne correspond pas au choix enregistré. Recharge le quiz."
+          });
+        }
+
+        const mode = savedMode.selected_mode;
+        const responseText = answer.answer.trim();
+
+        if (mode === "CARRE" || mode === "DUO") {
+          const shownOptions = Array.isArray(
+            savedMode.displayed_options
+          )
+            ? savedMode.displayed_options
+            : [];
+
+          if (!shownOptions.some((option) => option === responseText)) {
+            return json(400, {
+              error: "La réponse ne fait pas partie des propositions affichées."
+            });
+          }
+        }
+
+        const accepted = Array.isArray(question.correct_answers)
+          ? question.correct_answers
+          : [];
+
+        const correct = accepted.some(
+          (value) => normalize(value) === normalize(responseText)
+        );
+
+        const basePoints = {
+          CASH: 5,
+          CARRE: 3,
+          DUO: 1
+        }[mode];
+
+        const points = correct
+          ? basePoints * (question.is_double ? 2 : 1)
+          : 0;
+
+        total += points;
+
+        storedAnswers.push({
+          question_id: question.id,
+          selected_mode: mode,
+          answer_text: responseText,
+          is_correct: correct,
+          fragments_awarded: points
+        });
+
+        corrections.push({
+          questionNumber: question.question_number,
+          question: question.question_text,
+          yourAnswer: responseText,
+          correct,
+          correctAnswer:
+            question.correct_answer_display || accepted.join(" / "),
+          explanation: question.explanation || "",
+          fragments: points
+        });
+      }
+
+      // Dernière vérification applicative avant insertion.
+      if (await hasSubmittedChapter(chapterId, attempt.discord_pseudo)) {
+        return json(409, {
+          error: "Tu as déjà envoyé tes réponses pour ce chapitre. Ton premier résultat reste définitif."
+        });
+      }
+
+      // Créer la soumission.
+      let submissions;
+
+      try {
+        submissions = await supabase("submissions?select=id", {
+          method: "POST",
+          headers: {
+            Prefer: "return=representation"
+          },
+          body: JSON.stringify({
+            chapter_id: chapterId,
+            discord_pseudo: attempt.discord_pseudo,
+            total_fragments: total
+          })
+        });
+      } catch (error) {
+        if (error.code === "23505" || error.status === 409) {
+          return json(409, {
+            error: "Tu as déjà envoyé tes réponses pour ce chapitre. Ton premier résultat reste définitif."
+          });
+        }
+
+        throw error;
+      }
+
+      const submissionId = submissions?.[0]?.id;
+
+      if (!submissionId) {
+        throw new Error("Enregistrement du résultat impossible.");
+      }
+
+      // Enregistrer les réponses liées à cette soumission.
+      await supabase("answers", {
+        method: "POST",
+        body: JSON.stringify(
+          storedAnswers.map((answer) => ({
+            ...answer,
+            submission_id: submissionId
+          }))
+        )
+      });
+
+      // Marquer la tentative comme envoyée.
+      await supabase("quiz_attempts?id=eq." + attempt.id, {
+        method: "PATCH",
+        body: JSON.stringify({
+          submitted_at: new Date().toISOString()
+        })
+      });
+
+      return json(200, {
+        totalFragments: total,
+        corrections
+      });
+    }
+
+    return json(400, {
+      error: "Action inconnue."
+    });
+  } catch (error) {
+    console.error("Erreur quiz :", error);
+
+    if (error?.code === "23505" || error?.status === 409) {
+      return json(409, {
+        error: "Tu as déjà envoyé tes réponses pour ce chapitre. Ton premier résultat reste définitif."
+      });
+    }
+
+    return json(500, {
+      error: "Une erreur technique est survenue lors de l'envoi. Réessaie plus tard."
+    });
+  }
+};
