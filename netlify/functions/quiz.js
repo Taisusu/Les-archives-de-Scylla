@@ -1,3 +1,4 @@
+
 const json = (statusCode, data) => ({
   statusCode,
   headers: {
@@ -81,10 +82,40 @@ function randomItem(items) {
 
 async function getPublishedChapter(chapterId) {
   const chapters = await supabase(
-    "chapters?id=eq." + chapterId + "&is_published=eq.true&select=id,title,volume_number,chapter_number"
+    "chapters?id=eq." + chapterId + "&is_published=eq.true&select=id,title,volume_number,chapter_number,opens_at,closes_at"
   );
 
   return chapters[0] || null;
+}
+
+// Vérifie les dates programmées pour le chapitre.
+function getChapterScheduleError(chapter) {
+  // Sans dates configurées, on conserve le comportement actuel.
+  if (!chapter.opens_at || !chapter.closes_at) {
+    return null;
+  }
+
+  const opensAt = new Date(chapter.opens_at);
+  const closesAt = new Date(chapter.closes_at);
+  const now = new Date();
+
+  if (
+    Number.isNaN(opensAt.getTime()) ||
+    Number.isNaN(closesAt.getTime()) ||
+    closesAt <= opensAt
+  ) {
+    return "Les horaires de ce chapitre ne sont pas correctement configurés. Contacte l'équipe des Archives.";
+  }
+
+  if (now < opensAt) {
+    return "Ce chapitre n'est pas encore ouvert. Reviens à la date et à l'heure prévues.";
+  }
+
+  if (now >= closesAt) {
+    return "Ce chapitre est fermé. Les participations ne sont plus acceptées.";
+  }
+
+  return null;
 }
 
 // Vérifie si le pseudo a déjà un résultat pour ce chapitre.
@@ -166,6 +197,15 @@ exports.handler = async (event) => {
       return json(404, {
         error: "Chapitre indisponible."
       });
+    }
+
+    // Bloque démarrage, choix des modes et envoi hors du créneau configuré.
+    if (["start", "chooseMode", "submit"].includes(input.action)) {
+      const scheduleError = getChapterScheduleError(chapter);
+
+      if (scheduleError) {
+        return json(403, { error: scheduleError });
+      }
     }
 
     const questions = await supabase(
